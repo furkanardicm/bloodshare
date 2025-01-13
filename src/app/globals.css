@@ -2,20 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 210 40% 98%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    @apply bg-white text-gray-900 dark:bg-black dark:text-gray-100;
+  }
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-zinc-900 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-zinc-800;
+}
+
+/* Dark mode genel stilleri */
+.dark {
+  @apply selection:bg-red-500 selection:text-white;
+}
+
+.dark * {
+  @apply border-black;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  @apply bg-black text-white border-zinc-900 focus:border-red-500;
+}
+
+/* Buton stilleri */
+.dark button {
+  @apply transition-all duration-200;
+}
+
+.dark button:not(.bg-red-600):hover {
+  @apply bg-zinc-900 text-white;
+}
+
+.dark button.bg-red-600 {
+  @apply hover:bg-red-700 active:bg-red-800;
+}
+
+/* Kartlar ve Container'lar */
+.dark [class*="bg-gray-"] {
+  @apply bg-black;
+}
+
+/* Özel gri arka plan renkleri için override */
+.dark .bg-gray-50 {
+  @apply bg-black !important;
+}
+.dark .bg-gray-100 {
+  @apply bg-black !important;
+}
+.dark .bg-gray-200 {
+  @apply bg-black !important;
+}
+.dark .bg-gray-300 {
+  @apply bg-zinc-950 !important;
+}
+.dark .bg-gray-400 {
+  @apply bg-zinc-950 !important;
+}
+.dark .bg-gray-500 {
+  @apply bg-zinc-950 !important;
+}
+.dark .bg-gray-600 {
+  @apply bg-zinc-950 !important;
+}
+.dark .bg-gray-700 {
+  @apply bg-black !important;
+}
+.dark .bg-gray-800 {
+  @apply bg-black !important;
+}
+.dark .bg-gray-900 {
+  @apply bg-black !important;
+}
+
+.dark nav {
+  @apply bg-black border-black;
+}
+
+.dark footer {
+  @apply bg-black text-zinc-400 border-t border-zinc-950;
+}
+
+/* Özel elementler için hover efektleri */
+.dark a:hover {
+  @apply text-red-500;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  @apply hover:bg-black;
+}
+
+/* Stats kartları için özel stiller */
+.dark [class*="card"],
+.dark [class*="stats-card"] {
+  @apply bg-black backdrop-blur-sm border border-black;
 }

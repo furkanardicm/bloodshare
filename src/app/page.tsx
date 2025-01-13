@@ -1,101 +1,157 @@
-import Image from "next/image";
+'use client';
+
+import React from 'react';
+import { Heart, Building2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    {
+      title: "Hayat Kurtarmak İçin",
+      subtitle: "Bir Damla Kan Yeter",
+      desc: "Kan bağışı platformumuz aracılığıyla ihtiyaç sahiplerine yardım edin, hayat kurtarın.",
+      image: "/slider1.jpg"
+    },
+    {
+      title: "Acil Kan İhtiyacı",
+      subtitle: "Her Saniye Önemli",
+      desc: "Acil durumlarda hızlı eşleşme sistemi ile dakikalar içinde bağışçı bulun.",
+      image: "/slider2.jpg"
+    },
+    {
+      title: "Güvenilir Platform",
+      subtitle: "Hastanelerle Entegre",
+      desc: "Türkiye'nin önde gelen hastaneleriyle işbirliği içinde çalışıyoruz.",
+      image: "/slider3.jpg"
+    }
+  ];
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen pb-12">
+      {/* Hero Slider */}
+      <div className="relative h-[600px] w-full overflow-hidden">
+        {slides.map((slide, index) => (
+          <div
+            key={index}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              currentSlide === index ? 'opacity-100' : 'opacity-0'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30 z-10" />
+            <div 
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${slide.image})` }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <div className="relative z-20 h-full flex items-center justify-center">
+              <div className="text-center max-w-4xl mx-auto px-4">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
+                  <span className="text-white">
+                    {slide.title}
+                  </span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-600 block mt-2">
+                    {slide.subtitle}
+                  </span>
+                </h1>
+                <p className="text-lg sm:text-xl text-gray-200 max-w-3xl mx-auto mb-8">
+                  {slide.desc}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {/* Slider Controls */}
+        <div className="absolute bottom-8 left-0 right-0 z-30 flex justify-center space-x-3">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                currentSlide === index 
+                  ? 'bg-red-500 w-8' 
+                  : 'bg-white/50 hover:bg-white'
+              }`}
+            />
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        
+        <button 
+          onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all duration-300"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all duration-300"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="max-w-7xl mx-auto -mt-20 relative z-30 px-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2">
+            <Heart className="w-5 h-5" />
+            <span>Kan Bağışında Bulun</span>
+          </button>
+          <button className="bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 border-2 border-red-500 text-red-500 dark:text-red-400 px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2">
+            <Users className="w-5 h-5" />
+            <span>Bağışçı Arayın</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <section className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16 mt-24 px-4">
+        {[
+          { icon: Heart, title: 'Hızlı Eşleşme', desc: 'Kan grubu ve konum bazlı akıllı eşleştirme sistemi ile hızlıca bağışçı bulun.' },
+          { icon: Building2, title: 'Hastane Entegrasyonu', desc: 'Hastanelerle entegre sistem sayesinde ihtiyaçları anlık olarak takip edin.' },
+          { icon: Users, title: 'Mobil Uyumlu', desc: 'Her cihazda sorunsuz çalışan modern arayüz ile her an ulaşılabilir.' }
+        ].map((feature, i) => (
+          <div key={i} className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-600/20 dark:from-red-500/10 dark:to-red-600/10 rounded-xl transition-all duration-300"></div>
+            <div className="bg-white dark:bg-black p-8 rounded-xl relative">
+              <div className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-600/5 p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                {React.createElement(feature.icon, { className: "w-6 h-6 text-red-500 dark:text-red-400" })}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400">{feature.desc}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* Stats Section */}
+      <section className="relative group max-w-7xl mx-auto">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-600/20 dark:from-red-500/10 dark:to-red-600/10 rounded-xl transition-all duration-300"></div>
+        <div className="bg-white dark:bg-black rounded-xl p-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {[
+              { icon: Heart, value: '1,234+', label: 'Başarılı Bağış' },
+              { icon: Building2, value: '56', label: 'Partner Hastane' },
+              { icon: Users, value: '789+', label: 'Aktif Bağışçı' }
+            ].map((stat, i) => (
+              <div key={i} className="flex flex-col items-center space-y-2">
+                <div className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-500/10 dark:to-red-600/5 p-3 rounded-full">
+                  {React.createElement(stat.icon, { className: "w-8 h-8 text-red-500 dark:text-red-400" })}
+                </div>
+                <div className="text-4xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                <div className="text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
-}
+} 

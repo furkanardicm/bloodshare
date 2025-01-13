@@ -1,23 +1,22 @@
 import { NextResponse } from "next/server";
+import { connect } from "@/lib/mongodb";
 import BloodRequest from "@/models/BloodRequest";
 import User from "@/models/User";
-import { dbConnect } from "@/lib/mongodb";
 
 export async function GET() {
   try {
-    await dbConnect();
+    await connect();
     await User.init();
-
-    const bloodRequests = await BloodRequest.find({ status: "active" })
-      .sort({ createdAt: -1 })
+    
+    const requests = await BloodRequest.find({ status: "active" })
       .populate("userId", "name")
-      .lean();
+      .sort({ createdAt: -1 });
 
-    return NextResponse.json(bloodRequests);
+    return NextResponse.json(requests);
   } catch (error) {
-    console.error("Kan bağışı istekleri alınırken hata:", error);
+    console.error("Kan ihtiyaçları yüklenirken hata:", error);
     return NextResponse.json(
-      { error: "Kan bağışı istekleri alınamadı" },
+      { error: "İhtiyaçlar yüklenirken bir hata oluştu" },
       { status: 500 }
     );
   }

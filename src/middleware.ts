@@ -1,24 +1,16 @@
-import { getToken } from 'next-auth/jwt';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { withAuth } from "next-auth/middleware"
 
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ 
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET 
-  });
-
-  // Profil sayfalarına erişim kontrolü
-  if (request.nextUrl.pathname.startsWith('/profil')) {
-    if (!token) {
-      const redirectUrl = new URL('/', request.url);
-      return NextResponse.redirect(redirectUrl);
-    }
+export default withAuth(
+  function middleware(req) {
+    return
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token
+    },
   }
-
-  return NextResponse.next();
-}
+)
 
 export const config = {
-  matcher: ['/profil/:path*']
-}; 
+  matcher: ["/profil/:path*"]
+} 

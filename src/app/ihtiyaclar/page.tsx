@@ -1,25 +1,29 @@
 "use client"
 
-import { useState, useEffect } from 'react';
-import { Search, MapPin, Calendar, Phone, User } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useToast } from "@/components/ui/use-toast"
+import { Loading } from "@/components/ui/loading"
+import { format } from "date-fns"
+import { tr } from "date-fns/locale"
 
 interface BloodRequest {
-  _id: string;
+  _id: string
   userId: {
-    name: string;
-  };
-  bloodType: string;
-  hospital: string;
-  city: string;
-  units: number;
-  description: string;
-  contact: string;
-  createdAt: string;
-  status: 'active' | 'completed';
+    _id: string
+    name: string
+  }
+  bloodType: string
+  hospital: string
+  city: string
+  units: number
+  description: string
+  contact: string
+  status: string
+  createdAt: string
 }
 
 function maskName(name: string): string {
@@ -33,187 +37,138 @@ function maskName(name: string): string {
 }
 
 export default function NeedsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [bloodType, setBloodType] = useState<string | undefined>();
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'city'>('newest');
-  const [requests, setRequests] = useState<BloodRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [requests, setRequests] = useState<BloodRequest[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [bloodType, setBloodType] = useState<string>("all")
+  const { toast } = useToast()
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
-
-  async function fetchRequests() {
-    try {
-      const response = await fetch('/api/blood-requests/active');
-      if (!response.ok) {
-        throw new Error('Veriler alınamadı');
+    async function fetchRequests() {
+      try {
+        const response = await fetch('/api/blood-requests/active')
+        if (!response.ok) throw new Error('İhtiyaçlar yüklenirken bir hata oluştu')
+        const data = await response.json()
+        setRequests(data)
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Hata!",
+          description: error instanceof Error ? error.message : 'Bir hata oluştu'
+        })
+      } finally {
+        setLoading(false)
       }
-      const data = await response.json();
-      setRequests(data);
-    } catch (error) {
-      console.error('Veri alma hatası:', error);
-      toast({
-        title: 'Hata',
-        description: 'Kan ihtiyaçları yüklenirken bir hata oluştu.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
     }
+
+    fetchRequests()
+  }, [toast])
+
+  const filteredRequests = requests.filter((request) => {
+    const matchesSearch = 
+      request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.hospital.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesBloodType = bloodType === "all" || request.bloodType === bloodType
+    return matchesSearch && matchesBloodType
+  })
+
+  if (loading) {
+    return <Loading />
   }
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = 
-      request.hospital.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesBloodType = !bloodType || bloodType === 'all' || request.bloodType === bloodType;
-
-    return matchesSearch && matchesBloodType;
-  });
-
-  const sortedRequests = [...filteredRequests].sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'city':
-        return a.city.localeCompare(b.city);
-      default:
-        return 0;
-    }
-  });
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 mt-2">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Kan İhtiyaçları
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Aktif kan ihtiyaçlarını görüntüleyin ve filtreleme seçenekleriyle arama yapın.
+            Acil kan ihtiyaçlarını görüntüleyin ve bağışta bulunun.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-lg p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Hastane, şehir veya açıklama ara..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-transparent"
-                />
-              </div>
+        <div className="sticky top-16 z-10 bg-gray-50 dark:bg-gray-950 border-y border-gray-200 dark:border-gray-800 py-4 mb-6">
+          <div className="flex items-center gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <Input
+                placeholder="Şehir veya hastane ara..."
+                className="pl-9 bg-white dark:bg-black"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <div className="flex gap-4">
+            <div className="w-48">
               <Select value={bloodType} onValueChange={setBloodType}>
-                <SelectTrigger className="w-[180px] bg-transparent">
-                  <SelectValue placeholder="Kan Grubu" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Kan grubu seçin" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A-">A-</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B-">B-</SelectItem>
-                  <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
-                  <SelectItem value="0+">0+</SelectItem>
-                  <SelectItem value="0-">0-</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={(value: 'newest' | 'oldest' | 'city') => setSortBy(value)}>
-                <SelectTrigger className="w-[180px] bg-transparent">
-                  <SelectValue placeholder="Sıralama" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">En Yeni</SelectItem>
-                  <SelectItem value="oldest">En Eski</SelectItem>
-                  <SelectItem value="city">Şehir</SelectItem>
+                  <SelectItem value="A+">A Rh+</SelectItem>
+                  <SelectItem value="A-">A Rh-</SelectItem>
+                  <SelectItem value="B+">B Rh+</SelectItem>
+                  <SelectItem value="B-">B Rh-</SelectItem>
+                  <SelectItem value="AB+">AB Rh+</SelectItem>
+                  <SelectItem value="AB-">AB Rh-</SelectItem>
+                  <SelectItem value="0+">0 Rh+</SelectItem>
+                  <SelectItem value="0-">0 Rh-</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">
-              Yükleniyor...
-            </p>
-          </div>
-        )}
-
-        {/* Requests List */}
-        {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {sortedRequests.map((request) => (
-              <Card key={request._id} className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {request.hospital}
-                    </CardTitle>
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                      {request.bloodType}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <MapPin className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-gray-900 dark:text-white">{request.city}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                      <span className="text-gray-900 dark:text-white">
-                        {new Date(request.createdAt).toLocaleDateString('tr-TR')}
+        {/* Content */}
+        <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
+          <CardHeader>
+            <CardTitle>İhtiyaç Listesi</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {filteredRequests.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400">
+                Aradığınız kriterlere uygun kan ihtiyacı bulunamadı.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredRequests.map((request) => (
+                  <div
+                    key={request._id}
+                    className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {request.hospital} - {request.city}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {format(new Date(request.createdAt), "d MMMM yyyy", {
+                            locale: tr,
+                          })}
+                        </p>
+                      </div>
+                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                        {request.bloodType}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                       {request.description}
                     </p>
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-800 space-y-2">
-                      <div className="flex items-center space-x-2 text-sm">
-                        <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-gray-900 dark:text-white">{maskName(request.userId?.name)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm">
-                        <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-gray-900 dark:text-white">{request.contact}</span>
-                      </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <p>İhtiyaç: {request.units} ünite</p>
+                      <p>İletişim: {request.contact}</p>
+                      <p>İsteyen: {maskName(request.userId.name)}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && sortedRequests.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">
-              {requests.length === 0 
-                ? 'Şu anda aktif bir kan ihtiyacı bulunmuyor.'
-                : 'Arama kriterlerinize uygun kan ihtiyacı bulunamadı.'
-              }
-            </p>
-          </div>
-        )}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
+  )
 } 

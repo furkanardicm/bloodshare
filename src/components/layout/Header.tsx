@@ -137,7 +137,7 @@ export default function Header() {
               {session ? (
                 <div className="flex items-center space-x-4">
                   <Link 
-                    href="/profil"
+                    href="/profil/isteklerim"
                     className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 flex items-center space-x-2 transition-colors"
                   >
                     <User className="w-4 h-4" />
@@ -233,7 +233,7 @@ export default function Header() {
               {session ? (
                 <div className="space-y-2 px-2">
                   <Link 
-                    href="/profil"
+                    href="/profil/isteklerim"
                     className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 transition-colors"
                   >
                     <User className="w-4 h-4" />

@@ -4,9 +4,15 @@ import React from 'react';
 import { Heart, Building2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import LoginModal from '@/components/LoginModal';
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const slides = [
     {
       title: "Hayat Kurtarmak İçin",
@@ -101,11 +107,20 @@ export default function Home() {
       {/* Action Buttons */}
       <div className="max-w-7xl mx-auto -mt-20 relative z-30 px-4">
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/profil/isteklerim/yeni" className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2">
+          <button 
+            onClick={() => {
+              if (session) {
+                router.push('/profil/isteklerim/yeni');
+              } else {
+                setShowLoginModal(true);
+              }
+            }}
+            className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2"
+          >
             <Heart className="w-5 h-5" />
             <span>Kan Bağışında Bulun</span>
-          </Link>
-          <Link href="/ihtiyaclar" className="bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 border-2 border-red-500 text-red-500 dark:text-red-400 px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2">
+          </button>
+          <Link href="/bagiscilar" className="bg-white dark:bg-black hover:bg-gray-50 dark:hover:bg-gray-900 border-2 border-red-500 text-red-500 dark:text-red-400 px-8 py-3 rounded-lg transition-all duration-300 text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-black flex items-center justify-center space-x-2">
             <Users className="w-5 h-5" />
             <span>Bağışçı Arayın</span>
           </Link>
@@ -153,6 +168,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Login Modal */}
+      <LoginModal 
+        show={showLoginModal} 
+        handleClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 } 

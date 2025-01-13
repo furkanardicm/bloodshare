@@ -1,111 +1,94 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function SettingsPage() {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      toast({
-        title: "Bilgi",
-        description: "Şifre değiştirme özelliği henüz aktif değil.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Hata!",
-        description: "Bir hata oluştu.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Ayarlar</h1>
-      
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Şifre Değiştir</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordChange} className="space-y-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-16">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Hesap Ayarları
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Profil bilgilerinizi güncelleyin ve hesap ayarlarınızı yönetin.
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6">
+          <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
+            <CardHeader>
+              <CardTitle>Profil Bilgileri</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Ad Soyad</Label>
+                  <Input id="name" placeholder="Ad Soyad" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-posta</Label>
+                  <Input id="email" type="email" placeholder="E-posta" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Telefon</Label>
+                  <Input id="phone" placeholder="Telefon" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bloodType">Kan Grubu</Label>
+                  <Select>
+                    <SelectTrigger id="bloodType" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+                      <SelectValue placeholder="Kan grubu seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A+">A Rh+</SelectItem>
+                      <SelectItem value="A-">A Rh-</SelectItem>
+                      <SelectItem value="B+">B Rh+</SelectItem>
+                      <SelectItem value="B-">B Rh-</SelectItem>
+                      <SelectItem value="AB+">AB Rh+</SelectItem>
+                      <SelectItem value="AB-">AB Rh-</SelectItem>
+                      <SelectItem value="0+">0 Rh+</SelectItem>
+                      <SelectItem value="0-">0 Rh-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button>Değişiklikleri Kaydet</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
+            <CardHeader>
+              <CardTitle>Şifre Değiştir</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Mevcut Şifre</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  placeholder="Mevcut şifrenizi girin"
-                  required
-                />
+                <Input id="currentPassword" type="password" placeholder="Mevcut şifreniz" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Yeni Şifre</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="Yeni şifrenizi girin"
-                  required
-                />
+                <Input id="newPassword" type="password" placeholder="Yeni şifreniz" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Yeni Şifre Tekrar</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Yeni şifrenizi tekrar girin"
-                  required
-                />
+                <Label htmlFor="confirmPassword">Yeni Şifre (Tekrar)</Label>
+                <Input id="confirmPassword" type="password" placeholder="Yeni şifrenizi tekrar girin" className="bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800" />
               </div>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full"
-              >
-                {isLoading ? 'Değiştiriliyor...' : 'Şifreyi Değiştir'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hesap Ayarları</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label>Bağış Yapılabilir Durumu</Label>
-                <div className="mt-2">
-                  <Button variant="outline" className="w-full">
-                    Bağış Yapmaya Uygunum
-                  </Button>
-                </div>
+              <div className="flex justify-end">
+                <Button>Şifreyi Güncelle</Button>
               </div>
-              <div>
-                <Label>Bildirimler</Label>
-                <div className="mt-2">
-                  <Button variant="outline" className="w-full">
-                    Bildirimleri Yönet
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
-  );
+  )
 } 

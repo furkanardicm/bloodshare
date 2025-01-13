@@ -1,9 +1,11 @@
-import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { dbConnect } from '@/lib/mongodb';
-import UserModel, { IUser, IUserWithoutPassword } from '@/models/User';
+import { User, type IUser, type IUserWithoutPassword } from "@/models/User";
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
+import { NextAuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
+import { Session } from 'next-auth';
 
 declare module 'next-auth' {
   interface User extends IUserWithoutPassword {}
@@ -19,93 +21,87 @@ declare module 'next-auth/jwt' {
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Şifre", type: "password" }
+        email: { label: 'E-posta', type: 'text' },
+        password: { label: 'Şifre', type: 'password' },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email ve şifre gerekli');
+          throw new Error('E-posta ve şifre gereklidir');
         }
 
         try {
           await dbConnect();
-          const user = await UserModel.findOne({ email: credentials.email }).lean() as IUser;
-          
+          const user = await User.findOne({ email: credentials.email });
+
           if (!user) {
-            throw new Error('Bu email adresi ile kayıtlı kullanıcı bulunamadı');
+            throw new Error('Kullanıcı bulunamadı');
           }
 
           const isValid = await bcrypt.compare(credentials.password, user.password);
-          
+
           if (!isValid) {
-            throw new Error('Girdiğiniz şifre hatalı');
+            throw new Error('Şifre yanlış');
           }
 
-          const userId = user._id?.toString();
-          if (!userId || !Types.ObjectId.isValid(userId)) {
-            throw new Error('Geçersiz kullanıcı ID');
-          }
-
-          const userWithoutPassword: IUserWithoutPassword = {
-            id: userId,
-            name: user.name || undefined,
-            email: user.email || undefined,
-            bloodType: user.bloodType || undefined,
-            city: user.city || undefined,
-            phone: user.phone || undefined,
-            isAvailable: user.isAvailable || undefined,
-            lastDonationDate: user.lastDonationDate || undefined,
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            bloodType: user.bloodType,
+            isDonor: user.isDonor,
+            lastDonationDate: user.lastDonationDate,
+            city: user.city,
             totalDonations: user.totalDonations,
-            helpedPeople: user.helpedPeople
-          };
-
-          return userWithoutPassword;
-        } catch (error: any) {
-          console.error('Giriş hatası:', error);
+            helpedPeople: user.helpedPeople,
+          } as IUserWithoutPassword;
+        } catch (error) {
           throw error;
         }
-      }
-    })
+      },
+    }),
   ],
-  session: {
-    strategy: 'jwt'
-  },
-  pages: {
-    signIn: '/giris',
-    error: '/giris'
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.bloodType = user.bloodType;
-        token.city = user.city;
         token.phone = user.phone;
-        token.isAvailable = user.isAvailable;
+        token.bloodType = user.bloodType;
+        token.isDonor = user.isDonor;
         token.lastDonationDate = user.lastDonationDate;
+        token.city = user.city;
         token.totalDonations = user.totalDonations;
         token.helpedPeople = user.helpedPeople;
       }
       return token;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.name = token.name === null ? undefined : token.name;
-        session.user.email = token.email === null ? undefined : token.email;
-        session.user.bloodType = token.bloodType === null ? undefined : token.bloodType;
-        session.user.city = token.city === null ? undefined : token.city;
-        session.user.phone = token.phone === null ? undefined : token.phone;
-        session.user.isAvailable = token.isAvailable === null ? undefined : token.isAvailable;
-        session.user.lastDonationDate = token.lastDonationDate === null ? undefined : token.lastDonationDate;
-        session.user.totalDonations = token.totalDonations || 0;
-        session.user.helpedPeople = token.helpedPeople || 0;
+    async session({ session, token }: { session: Session; token: JWT }) {
+      if (token) {
+        session.user = {
+          id: token.id ?? '',
+          name: token.name ?? '',
+          email: token.email ?? '',
+          phone: token.phone ?? '',
+          bloodType: token.bloodType ?? '',
+          isDonor: token.isDonor ?? false,
+          lastDonationDate: token.lastDonationDate,
+          city: token.city ?? '',
+          totalDonations: token.totalDonations ?? 0,
+          helpedPeople: token.helpedPeople ?? 0,
+        };
       }
       return session;
-    }
-  }
+    },
+  },
+  pages: {
+    signIn: '/',
+  },
+  session: {
+    strategy: 'jwt',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 }; 

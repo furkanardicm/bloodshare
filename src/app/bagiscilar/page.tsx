@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
@@ -21,6 +21,7 @@ export default function DonorsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [bloodType, setBloodType] = useState<string>("all")
+  const [city, setCity] = useState<string>("")
   const { toast } = useToast()
 
   useEffect(() => {
@@ -55,59 +56,73 @@ export default function DonorsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 mt-2">
+    <div className="min-h-screen bg-background pt-20">
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             Bağışçılar
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             Kan bağışçılarını görüntüleyin ve iletişime geçin.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="sticky top-16 z-10 bg-gray-50 dark:bg-gray-950 border-y border-gray-200 dark:border-gray-800 py-4 mb-6">
+        <div className="sticky top-20 z-10 bg-background border-y border-border py-4 mb-6">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Şehir ara..."
-                className="pl-9 bg-white dark:bg-black"
+                className="pl-9 focus-visible:ring-0 focus-visible:ring-offset-0"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="w-48">
-              <Select value={bloodType} onValueChange={setBloodType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kan grubu seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="A+">A Rh+</SelectItem>
-                  <SelectItem value="A-">A Rh-</SelectItem>
-                  <SelectItem value="B+">B Rh+</SelectItem>
-                  <SelectItem value="B-">B Rh-</SelectItem>
-                  <SelectItem value="AB+">AB Rh+</SelectItem>
-                  <SelectItem value="AB-">AB Rh-</SelectItem>
-                  <SelectItem value="0+">0 Rh+</SelectItem>
-                  <SelectItem value="0-">0 Rh-</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <select
+                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  value={bloodType}
+                  onChange={(e) => setBloodType(e.target.value)}
+                >
+                  <option value="">Kan Grubu</option>
+                  <option value="A+">A RH+</option>
+                  <option value="A-">A RH-</option>
+                  <option value="B+">B RH+</option>
+                  <option value="B-">B RH-</option>
+                  <option value="AB+">AB RH+</option>
+                  <option value="AB-">AB RH-</option>
+                  <option value="0+">0 RH+</option>
+                  <option value="0-">0 RH-</option>
+                </select>
+              </div>
+              <div className="relative">
+                <select
+                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                >
+                  <option value="">Şehir</option>
+                  <option value="istanbul">İstanbul</option>
+                  <option value="ankara">Ankara</option>
+                  <option value="izmir">İzmir</option>
+                  <option value="bursa">Bursa</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <Card className="bg-white dark:bg-black border-gray-200 dark:border-gray-800">
+        <Card className="bg-[rgb(13,13,13)]">
           <CardHeader>
             <CardTitle>Bağışçı Listesi</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredDonors.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 Aradığınız kriterlere uygun bağışçı bulunamadı.
               </p>
             ) : (
@@ -115,21 +130,21 @@ export default function DonorsPage() {
                 {filteredDonors.map((donor) => (
                   <div
                     key={donor._id}
-                    className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900"
+                    className="p-4 border border-border rounded-lg bg-[rgb(17,17,19)]"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                      <h3 className="font-semibold text-foreground">
                         {donor.name}
                       </h3>
                       <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                         {donor.bloodType}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       {donor.city}
                     </p>
                     {donor.lastDonationDate && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         Son bağış: {new Date(donor.lastDonationDate).toLocaleDateString('tr-TR')}
                       </p>
                     )}

@@ -1,20 +1,30 @@
-import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
-import BloodRequest from "@/models/BloodRequest";
-import { dbConnect } from "@/lib/mongodb";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { connect } from '@/lib/mongodb';
+import { BloodRequest } from '@/models/BloodRequest';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 });
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Oturum açmanız gerekiyor' },
+        { status: 401 }
+      );
     }
 
-    const body = await req.json();
-    const { bloodType, hospital, city, units, description, contact } = body;
+    const { bloodType, hospital, city, units, description, contact } = await request.json();
 
-    await dbConnect();
+    if (!bloodType || !hospital || !city || !units || !description || !contact) {
+      return NextResponse.json(
+        { error: 'Tüm alanlar zorunludur' },
+        { status: 400 }
+      );
+    }
+
+    await connect();
 
     const bloodRequest = await BloodRequest.create({
       userId: session.user.id,
@@ -24,13 +34,14 @@ export async function POST(req: Request) {
       units,
       description,
       contact,
+      status: 'active'
     });
 
     return NextResponse.json(bloodRequest);
   } catch (error) {
-    console.error("Kan bağışı isteği oluşturulurken hata:", error);
+    console.error('Kan ihtiyacı oluşturulurken hata:', error);
     return NextResponse.json(
-      { error: "Kan bağışı isteği oluşturulamadı" },
+      { error: 'Kan ihtiyacı oluşturulurken bir hata oluştu' },
       { status: 500 }
     );
   }
@@ -43,7 +54,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connect();
 
     const bloodRequests = await BloodRequest.find({
       userId: session.user.id,

@@ -6,17 +6,72 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 8.6%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 8.6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 8.6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 8.6%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 8.6%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 8.6%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 8.6%;
+    --input: 0 0% 8.6%;
+    --ring: 0 0% 83.9%;
   }
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    @apply bg-white text-gray-900 dark:bg-black dark:text-gray-100;
+    @apply bg-background text-foreground;
   }
 }
 
@@ -26,15 +81,15 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-black;
+  @apply bg-gray-100 dark:bg-[rgb(22,22,22)];
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-zinc-900 rounded-full;
+  @apply bg-gray-300 dark:bg-[rgb(28,28,28)] rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-zinc-800;
+  @apply bg-gray-400 dark:bg-[rgb(32,32,32)];
 }
 
 /* Dark mode genel stilleri */
@@ -42,14 +97,17 @@
   @apply selection:bg-red-500 selection:text-white;
 }
 
+/* Genel stiller */
 .dark * {
-  @apply border-black;
+  @apply border-[rgb(22,22,22)];
 }
 
+/* Form elementleri */
 .dark input,
 .dark textarea,
-.dark select {
-  @apply bg-black text-white border-zinc-900 focus:border-red-500;
+.dark select,
+.dark [role="combobox"] {
+  @apply bg-[rgb(22,22,22)] text-white border-[rgb(28,28,28)] focus:border-red-500;
 }
 
 /* Buton stilleri */
@@ -58,69 +116,91 @@
 }
 
 .dark button:not(.bg-red-600):hover {
-  @apply bg-zinc-900 text-white;
+  @apply bg-[rgb(28,28,28)] text-white;
 }
 
 .dark button.bg-red-600 {
   @apply hover:bg-red-700 active:bg-red-800;
 }
 
-/* Kartlar ve Container'lar */
-.dark [class*="bg-gray-"] {
-  @apply bg-black;
+/* Sidebar */
+.dark .sidebar {
+  @apply bg-[rgb(22,22,22)] border-r border-[rgb(28,28,28)];
 }
 
-/* Özel gri arka plan renkleri için override */
-.dark .bg-gray-50 {
-  @apply bg-black !important;
-}
-.dark .bg-gray-100 {
-  @apply bg-black !important;
-}
-.dark .bg-gray-200 {
-  @apply bg-black !important;
-}
-.dark .bg-gray-300 {
-  @apply bg-zinc-950 !important;
-}
-.dark .bg-gray-400 {
-  @apply bg-zinc-950 !important;
-}
-.dark .bg-gray-500 {
-  @apply bg-zinc-950 !important;
-}
-.dark .bg-gray-600 {
-  @apply bg-zinc-950 !important;
-}
-.dark .bg-gray-700 {
-  @apply bg-black !important;
-}
-.dark .bg-gray-800 {
-  @apply bg-black !important;
-}
-.dark .bg-gray-900 {
-  @apply bg-black !important;
-}
-
+/* Navbar */
 .dark nav {
-  @apply bg-black border-black;
+  @apply bg-[rgb(22,22,22)] border-[rgb(22,22,22)];
 }
 
+/* Arama çubuğu */
+.dark .search-input {
+  @apply bg-[rgb(22,22,22)] border-[rgb(28,28,28)];
+}
+
+/* Dropdown ve Select */
+.dark [role="listbox"],
+.dark .select-content,
+.dark .dropdown-content {
+  @apply bg-[rgb(22,22,22)] border border-[rgb(28,28,28)];
+}
+
+/* Kan grubu etiketleri */
+.dark .blood-type-badge {
+  @apply bg-[rgb(28,28,28)] text-white;
+}
+
+/* Kartlar */
+.dark .card,
+.dark [class*="card"],
+.dark [class*="stats-card"] {
+  @apply bg-[rgb(22,22,22)] border-[rgb(28,28,28)];
+}
+
+/* Liste öğeleri */
+.dark .list-item,
+.dark [role="option"] {
+  @apply hover:bg-[rgb(28,28,28)];
+}
+
+/* Modal */
+.dark .modal-content {
+  @apply bg-[rgb(22,22,22)] border-[rgb(28,28,28)];
+}
+
+/* Tooltip */
+.dark .tooltip {
+  @apply bg-[rgb(28,28,28)] text-white;
+}
+
+/* Footer */
 .dark footer {
-  @apply bg-black text-zinc-400 border-t border-zinc-950;
+  @apply bg-[rgb(22,22,22)] text-zinc-400 border-t border-[rgb(28,28,28)];
 }
 
-/* Özel elementler için hover efektleri */
+/* Hover efektleri */
 .dark a:hover {
   @apply text-red-500;
 }
 
 .dark .hover\:bg-gray-100:hover {
-  @apply hover:bg-black;
+  @apply hover:bg-[rgb(28,28,28)];
 }
 
-/* Stats kartları için özel stiller */
-.dark [class*="card"],
-.dark [class*="stats-card"] {
-  @apply bg-black backdrop-blur-sm border border-black;
+/* Gri arka plan override'ları */
+.dark [class*="bg-gray-"] {
+  @apply bg-[rgb(22,22,22)];
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-gray-200,
+.dark .bg-gray-300,
+.dark .bg-gray-400,
+.dark .bg-gray-500,
+.dark .bg-gray-600,
+.dark .bg-gray-700,
+.dark .bg-gray-800,
+.dark .bg-gray-900 {
+  @apply bg-[rgb(22,22,22)] !important;
 }

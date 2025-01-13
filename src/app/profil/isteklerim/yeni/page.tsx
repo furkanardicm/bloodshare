@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
@@ -14,6 +13,8 @@ export default function NewRequestPage() {
   const { toast } = useToast()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [bloodType, setBloodType] = useState("")
+  const [city, setCity] = useState("")
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -68,33 +69,48 @@ export default function NewRequestPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="bloodType">Kan Grubu</Label>
-              <Select name="bloodType" required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kan grubu seçin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A+">A+</SelectItem>
-                  <SelectItem value="A-">A-</SelectItem>
-                  <SelectItem value="B+">B+</SelectItem>
-                  <SelectItem value="B-">B-</SelectItem>
-                  <SelectItem value="AB+">AB+</SelectItem>
-                  <SelectItem value="AB-">AB-</SelectItem>
-                  <SelectItem value="0+">0+</SelectItem>
-                  <SelectItem value="0-">0-</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Kan Grubu
+                </label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={bloodType}
+                  onChange={(e) => setBloodType(e.target.value)}
+                >
+                  <option value="">Kan Grubu Seçin</option>
+                  <option value="A+">A RH+</option>
+                  <option value="A-">A RH-</option>
+                  <option value="B+">B RH+</option>
+                  <option value="B-">B RH-</option>
+                  <option value="AB+">AB RH+</option>
+                  <option value="AB-">AB RH-</option>
+                  <option value="0+">0 RH+</option>
+                  <option value="0-">0 RH-</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Şehir
+                </label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                >
+                  <option value="">Şehir Seçin</option>
+                  <option value="istanbul">İstanbul</option>
+                  <option value="ankara">Ankara</option>
+                  <option value="izmir">İzmir</option>
+                  <option value="bursa">Bursa</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="hospital">Hastane</Label>
               <Input id="hospital" name="hospital" placeholder="Hastane adı" required />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="city">Şehir</Label>
-              <Input id="city" name="city" placeholder="Şehir" required />
             </div>
 
             <div className="space-y-2">

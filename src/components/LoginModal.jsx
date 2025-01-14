@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { PasswordInput } from "@/components/ui/password-input";
 
-export default function LoginModal({ show, handleClose }) {
+export default function LoginModal({ show, handleClose, setShowRegisterModal }) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,7 @@ export default function LoginModal({ show, handleClose }) {
       toast({
         title: "Başarılı!",
         description: "Giriş yapıldı.",
+        className: "bg-red-600 text-white border-none"
       });
 
       handleClose();
@@ -96,6 +97,20 @@ export default function LoginModal({ show, handleClose }) {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
           </Button>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Hesabınız yok mu?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                handleClose();
+                setShowRegisterModal(true);
+              }}
+              className="text-red-600 hover:text-red-700 font-medium"
+            >
+              Kayıt Ol
+            </button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

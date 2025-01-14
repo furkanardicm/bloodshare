@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Search, UserPlus, CheckCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { Loading } from "@/components/ui/loading"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { useSession } from "next-auth/react"
@@ -176,7 +176,7 @@ export default function NeedsPage() {
   }
 
   if (loading) {
-    return <Loading />
+    return <LoadingSpinner centered size="lg" />
   }
 
   return (

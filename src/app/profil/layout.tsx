@@ -59,17 +59,17 @@ export default function ProfileLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-[rgb(22,22,22)]">
       {/* Sidebar */}
       <aside className={cn(
-        "fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] border-r border-border bg-card transition-transform duration-300 z-40",
+        "fixed top-16 left-0 z-30 h-[calc(100vh-4rem)] w-64 border-r bg-background dark:bg-[rgb(22,22,22)] dark:border-[rgb(28,28,28)] transition-transform duration-300",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         {/* Sidebar açma/kapama butonu */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className={cn(
-            "absolute -right-7 top-12 p-1.5 rounded-r-md bg-card border border-l-0 border-border transition-transform duration-300",
+            "absolute -right-7 top-12 p-1.5 rounded-r-md bg-card dark:bg-[rgb(22,22,22)] border border-l-0 border-border dark:border-[rgb(28,28,28)] transition-transform duration-300",
             !isSidebarOpen && "-right-9"
           )}
         >
@@ -79,62 +79,40 @@ export default function ProfileLayout({
           )} />
         </button>
 
-        <nav className="flex flex-col gap-2 p-4">
-          <Link
-            href="/profil"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              pathname === "/profil" && "bg-accent text-accent-foreground"
-            )}
-          >
-            <User className="w-4 h-4" />
-            Profil
-          </Link>
-          <Link
-            href="/profil/isteklerim"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              pathname === "/profil/isteklerim" && "bg-accent text-accent-foreground"
-            )}
-          >
-            <Heart className="w-4 h-4" />
-            İsteklerim
-          </Link>
-          <Link
-            href="/profil/gecmis"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              pathname === "/profil/gecmis" && "bg-accent text-accent-foreground"
-            )}
-          >
-            <History className="w-4 h-4" />
-            Geçmiş
-          </Link>
-          <Link
-            href="/profil/ayarlar"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              pathname === "/profil/ayarlar" && "bg-accent text-accent-foreground"
-            )}
-          >
-            <Settings className="w-4 h-4" />
-            Ayarlar
-          </Link>
+        <nav className="space-y-2 p-6">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground dark:hover:bg-[rgb(28,28,28)]",
+                  isActive && "bg-accent text-accent-foreground dark:bg-[rgb(28,28,28)]"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {item.title}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 
       {/* Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Main content */}
       <main className={cn(
-        "min-h-screen pt-20 transition-all duration-300",
-        isSidebarOpen ? "ml-64" : "ml-0"
+        "min-h-screen pt-20 transition-all duration-300 bg-background dark:bg-[rgb(22,22,22)]",
+        isSidebarOpen ? "lg:pl-64" : "pl-0"
       )}>
         <div className="max-w-7xl mx-auto px-4">
           <Breadcrumb items={breadcrumbItems} />

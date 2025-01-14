@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { Loading } from "@/components/ui/loading"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { CheckCircle, Clock, Users, Plus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { format } from "date-fns"
@@ -11,6 +11,7 @@ import { tr } from "date-fns/locale"
 import type { BloodRequest } from "@/types/user"
 import Link from "next/link"
 import { CITIES } from "@/lib/constants";
+import { cn } from "@/lib/utils"
 
 export default function MyRequestsPage() {
   const [requests, setRequests] = useState<BloodRequest[]>([])
@@ -67,14 +68,44 @@ export default function MyRequestsPage() {
     }
   }
 
+  const handleCancel = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/blood-requests/${requestId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'İstek iptal edilirken bir hata oluştu')
+      }
+
+      setRequests(prev => prev.map(request => 
+        request._id === requestId 
+          ? { ...request, status: 'cancelled' as const } 
+          : request
+      ))
+
+      toast({
+        title: "Başarılı!",
+        description: "Bağış isteği iptal edildi.",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Hata!",
+        description: error instanceof Error ? error.message : 'Bir hata oluştu'
+      })
+    }
+  }
+
   if (loading) {
-    return <Loading />
+    return <LoadingSpinner centered size="lg" />
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">İsteklerim</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">İsteklerim</h1>
         <Link href="/profil/isteklerim/yeni">
           <Button className="bg-red-600 hover:bg-red-700 text-white">
             <Plus className="w-4 h-4 mr-2" />
@@ -83,102 +114,84 @@ export default function MyRequestsPage() {
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Bağış İsteklerim</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {requests.length === 0 ? (
-            <p className="text-muted-foreground">Henüz bir bağış isteğiniz bulunmuyor.</p>
-          ) : (
-            <div className="space-y-4">
-              {requests.map((request) => (
-                <div
-                  key={request._id}
-                  className="p-4 border border-border rounded-lg bg-card"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {request.hospital} - {request.city}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(request.createdAt), "d MMMM yyyy", {
-                          locale: tr,
-                        })}
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+      <div className="space-y-4 bg-[rgb(22,22,22)] rounded-lg p-4">
+        <h2 className="text-lg font-medium">Bağış İsteklerim</h2>
+        {loading ? (
+          <LoadingSpinner centered size="lg" />
+        ) : requests.length === 0 ? (
+          <p className="text-muted-foreground">Henüz bir bağış isteğiniz bulunmuyor.</p>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <div key={request._id} className="bg-[rgb(28,28,28)] rounded-lg p-4 space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-medium">{request.hospital} - {request.city}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(request.createdAt), 'd MMMM yyyy', { locale: tr })}
+                    </p>
+                    <p className="text-sm text-red-500 font-medium mt-1">
+                      {request.isUrgent && 'ACİL KAN İHTİYACI!'}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      İhtiyaç: {request.units} ünite
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="px-2 py-1 rounded-md bg-transparent border border-border text-sm">
                       {request.bloodType}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-muted-foreground mb-4">
-                    <p>{request.description}</p>
-                    <p className="mt-2">İhtiyaç: {request.units} ünite</p>
-                    <div className="flex items-center mt-1">
-                      <span>Durum:</span>
-                      {request.status === "completed" ? (
-                        <div className="flex items-center ml-2 text-green-600 dark:text-green-400">
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          <span>Tamamlandı</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center ml-2 text-yellow-600 dark:text-yellow-400">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span>Bekliyor</span>
-                        </div>
-                      )}
+                    </div>
+                    <div className={cn(
+                      "px-2 py-1 rounded-md bg-transparent border text-sm",
+                      request.status === "pending" && "text-yellow-500 border-yellow-500",
+                      request.status === "completed" && "text-emerald-500 border-emerald-500",
+                      request.status === "cancelled" && "text-red-500 border-red-500"
+                    )}>
+                      {request.status === "pending" && "Bekliyor"}
+                      {request.status === "completed" && "Tamamlandı"}
+                      {request.status === "cancelled" && "İptal Edildi"}
                     </div>
                   </div>
+                </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-2" />
-                        <span>Bağışçılar</span>
+                <div className="border-t border-[rgb(32,32,32)] pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Bağışçılar</span>
+                      <div className="px-2 py-1 rounded-md bg-transparent border border-border text-sm ml-2">
+                        {request.donors?.length || 0}/{request.units}
                       </div>
-                      <span className="font-medium">{request.totalDonors || 0}/{request.units}</span>
                     </div>
-
-                    {request.donors && request.donors.length > 0 && (
-                      <div className="space-y-2">
-                        {request.donors.map((donor, index) => (
-                          <div
-                            key={donor.userId + index}
-                            className="flex items-center justify-between p-2 bg-muted/50 rounded-lg"
-                          >
-                            <span className="text-sm">Bağışçı #{index + 1}</span>
-                            <div className="flex items-center">
-                              {donor.status === "completed" ? (
-                                <span className="text-sm text-green-600 dark:text-green-400">Tamamlandı</span>
-                              ) : (
-                                <span className="text-sm text-yellow-600 dark:text-yellow-400">Bekliyor</span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                    {request.status === "pending" && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                        onClick={() => handleCancel(request._id)}
+                        disabled={loading}
+                      >
+                        İptal Et
+                      </Button>
                     )}
-
-                    {request.status !== "completed" && (
+                    {request.status === "completed" && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleCompleteRequest(request._id)}
-                        className="w-full"
+                        className="text-emerald-500 border-emerald-500"
+                        disabled
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        İsteği Tamamla
+                        Tamamlandı
                       </Button>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 } 

@@ -9,6 +9,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CITIES } from "@/lib/constants"
+import { Save } from "lucide-react"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface User {
   name: string
@@ -84,6 +86,7 @@ export default function SettingsPage() {
       toast({
         title: "Başarılı!",
         description: "Ayarlarınız kaydedildi.",
+        className: "bg-red-600 text-white border-none"
       })
 
       router.refresh()
@@ -99,7 +102,7 @@ export default function SettingsPage() {
   }
 
   if (loading || !user) {
-    return <div>Yükleniyor...</div>
+    return <LoadingSpinner centered size="lg" />
   }
 
   return (
@@ -190,9 +193,25 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Kaydediliyor..." : "Kaydet"}
-            </Button>
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={saving}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {saving ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2 text-current" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Kaydet
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

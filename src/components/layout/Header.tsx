@@ -262,8 +262,16 @@ export default function Header() {
         )}
       </div>
 
-      <LoginModal show={showLoginModal} handleClose={() => setShowLoginModal(false)} />
-      <RegisterModal show={showRegisterModal} handleClose={() => setShowRegisterModal(false)} />
+      <LoginModal 
+        show={showLoginModal} 
+        handleClose={() => setShowLoginModal(false)}
+        setShowRegisterModal={setShowRegisterModal}
+      />
+      <RegisterModal 
+        show={showRegisterModal} 
+        handleClose={() => setShowRegisterModal(false)}
+        setShowLoginModal={setShowLoginModal}
+      />
     </header>
   );
 } 

@@ -13,7 +13,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { CITIES } from "@/lib/constants";
 import { Switch } from "@/components/ui/switch";
 
-export default function RegisterModal({ show, handleClose }) {
+export default function RegisterModal({ show, handleClose, setShowLoginModal }) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -22,12 +22,17 @@ export default function RegisterModal({ show, handleClose }) {
     handleSubmit,
     watch,
     formState: { errors },
+    getValues
   } = useForm();
 
   const onSubmit = async (data) => {
     setLoading(true);
 
     try {
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Şifreler eşleşmiyor");
+      }
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,6 +60,7 @@ export default function RegisterModal({ show, handleClose }) {
       toast({
         title: "Başarılı!",
         description: "Hesabınız oluşturuldu ve giriş yapıldı.",
+        className: "bg-red-600 text-white border-none"
       });
 
       handleClose();
@@ -126,6 +132,23 @@ export default function RegisterModal({ show, handleClose }) {
             )}
           </div>
           <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Şifre Tekrar</Label>
+            <PasswordInput
+              id="confirmPassword"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              disabled={loading}
+              {...register("confirmPassword", {
+                required: "Şifre tekrarı zorunludur",
+                validate: (value) =>
+                  value === getValues("password") || "Şifreler eşleşmiyor"
+              })}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="phone">Telefon</Label>
             <Input
               id="phone"
@@ -193,6 +216,20 @@ export default function RegisterModal({ show, handleClose }) {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Kaydediliyor..." : "Kayıt Ol"}
           </Button>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Zaten hesabınız var mı?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                handleClose();
+                setShowLoginModal(true);
+              }}
+              className="text-red-600 hover:text-red-700 font-medium"
+            >
+              Giriş Yap
+            </button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

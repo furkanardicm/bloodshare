@@ -9,12 +9,14 @@ import { useRouter } from 'next/navigation';
 import LoginModal from '@/components/LoginModal';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import RegisterModal from '@/components/RegisterModal';
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { data: session } = useSession();
   const router = useRouter();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const slides = [
     {
       title: "Hayat Kurtarmak İçin",
@@ -110,18 +112,34 @@ export default function Home() {
 
         {/* Action Buttons */}
         <div className="absolute left-0 right-0 bottom-20 flex justify-center gap-4 z-10">
-          <Link href="/profil/isteklerim/yeni">
-            <Button className="bg-red-600 hover:bg-red-700 px-8 py-6 text-lg dark:text-white flex items-center gap-2 transition-all duration-300 hover:scale-105">
-              <Droplets className="w-6 h-6" />
-              <span>Kan Bağışında Bulun</span>
-            </Button>
-          </Link>
-          <Link href="/bagiscilar">
-            <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white text-white px-8 py-6 text-lg flex items-center gap-2 transition-all duration-300 hover:scale-105">
-              <Search className="w-6 h-6" />
-              <span>Bağışçı Arayın</span>
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            {session?.user ? (
+              <Link href="/profil/isteklerim/yeni">
+                <Button 
+                  className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto text-sm"
+                >
+                  <Droplets className="w-4 h-4 mr-2" />
+                  Kan Bağışı Talep Et
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto text-sm"
+                onClick={() => setShowLoginModal(true)}
+              >
+                <Droplets className="w-4 h-4 mr-2" />
+                Kan Bağışı Talep Et
+              </Button>
+            )}
+            <Link href="/ihtiyaclar">
+              <Button 
+                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto text-sm"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                İlanları Görüntüle
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -172,6 +190,13 @@ export default function Home() {
       <LoginModal 
         show={showLoginModal} 
         handleClose={() => setShowLoginModal(false)} 
+        setShowRegisterModal={setShowRegisterModal}
+      />
+      {/* Register Modal */}
+      <RegisterModal 
+        show={showRegisterModal} 
+        handleClose={() => setShowRegisterModal(false)}
+        setShowLoginModal={setShowLoginModal}
       />
     </main>
   );

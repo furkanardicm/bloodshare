@@ -32,16 +32,15 @@ export interface BloodRequest {
   units: number;
   description: string;
   contact: string;
-  status: 'active' | 'completed';
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  isUrgent?: boolean;
+  status: "pending" | "completed" | "cancelled";
   donors?: Array<{
     email: string;
     name: string;
     userId: string;
-    status: 'pending' | 'completed';
-    addedAt: Date;
+    status: "pending" | "completed" | "cancelled";
   }>;
-  totalDonors?: number;
 } 

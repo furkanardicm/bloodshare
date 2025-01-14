@@ -18,7 +18,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         
         return (
           <div key={item.title} className="flex items-center">
-            {item.href ? (
+            {item.href && !isLast ? (
               <Link 
                 href={item.href}
                 className="hover:text-foreground transition-colors"
@@ -26,7 +26,9 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
                 {item.title}
               </Link>
             ) : (
-              <span className="text-foreground">{item.title}</span>
+              <span className={`${isLast ? "text-red-500 font-medium" : "text-foreground"}`}>
+                {item.title}
+              </span>
             )}
             
             {!isLast && (

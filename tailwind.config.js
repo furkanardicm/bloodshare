@@ -75,8 +75,25 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "toast-slide-in": "toast-slide-in 0.3s ease-out"
       },
+      textShadow: {
+        sm: '0 1px 2px rgba(0, 0, 0, 0.4)',
+        DEFAULT: '0 2px 4px rgba(0, 0, 0, 0.4)',
+        lg: '0 2px 10px rgba(0, 0, 0, 0.5)',
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ matchUtilities, theme }) {
+      matchUtilities(
+        {
+          'text-shadow': (value) => ({
+            textShadow: value,
+          }),
+        },
+        { values: theme('textShadow') }
+      )
+    },
+  ],
 }
 

@@ -49,4 +49,31 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Oturum açmanız gerekiyor' }, { status: 401 });
+    }
+
+    await connect();
+
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 404 });
+    }
+
+    // Hassas bilgileri çıkar
+    const { password, ...userWithoutPassword } = user.toObject();
+
+    return NextResponse.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Profil bilgileri getirilirken hata:', error);
+    return NextResponse.json(
+      { error: 'Profil bilgileri getirilirken hata oluştu' },
+      { status: 500 }
+    );
+  }
 } 

@@ -144,7 +144,7 @@ export default function NeedsPage() {
         </div>
 
         {/* Content */}
-        <Card className="bg-[rgb(13,13,13)]">
+        <Card className="bg-background">
           <CardHeader>
             <CardTitle>İhtiyaç Listesi</CardTitle>
           </CardHeader>
@@ -158,7 +158,7 @@ export default function NeedsPage() {
                 {filteredRequests.map((request) => (
                   <div
                     key={request._id}
-                    className="p-4 border border-border rounded-lg bg-[rgb(17,17,19)]"
+                    className="p-4 border border-border rounded-lg bg-card"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -171,7 +171,7 @@ export default function NeedsPage() {
                           })}
                         </p>
                       </div>
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                         {request.bloodType}
                       </span>
                     </div>

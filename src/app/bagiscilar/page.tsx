@@ -116,7 +116,7 @@ export default function DonorsPage() {
         </div>
 
         {/* Content */}
-        <Card className="bg-[rgb(13,13,13)]">
+        <Card className="bg-background">
           <CardHeader>
             <CardTitle>Bağışçı Listesi</CardTitle>
           </CardHeader>
@@ -130,13 +130,13 @@ export default function DonorsPage() {
                 {filteredDonors.map((donor) => (
                   <div
                     key={donor._id}
-                    className="p-4 border border-border rounded-lg bg-[rgb(17,17,19)]"
+                    className="p-4 border border-border rounded-lg bg-card"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold text-foreground">
                         {donor.name}
                       </h3>
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                         {donor.bloodType}
                       </span>
                     </div>

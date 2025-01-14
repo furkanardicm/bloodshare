@@ -40,8 +40,24 @@ export default function ProfilePage() {
   useEffect(() => {
     if (session?.user?.id) {
       fetchStats();
+      fetchUserData();
     }
   }, [session?.user?.id]);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('/api/users/profile');
+      if (!response.ok) throw new Error('Kullanıcı bilgileri getirilemedi');
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Hata',
+        description: 'Kullanıcı bilgileri getirilirken bir hata oluştu'
+      });
+    }
+  };
 
   const fetchStats = async () => {
     try {

@@ -6,54 +6,48 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Oturum açmanız gerekiyor" },
         { status: 401 }
       );
     }
 
-    const { bloodType, hospital, city, units, description, contact } = await req.json();
-
-    // Validasyon kontrolleri
-    if (!bloodType || !hospital || !city || !units || !description || !contact) {
-      return NextResponse.json(
-        { error: "Tüm alanları doldurun" },
-        { status: 400 }
-      );
-    }
+    const data = await req.json();
 
     const { db } = await connectToDatabase();
 
-    const request = {
-      bloodType,
-      hospital,
-      city,
-      units: parseInt(units),
-      description,
-      contact,
-      requesterEmail: session.user.email,
+    // Yeni kan isteği
+    const newRequest = {
+      userId: session.user.id,
+      bloodType: data.bloodType,
+      hospital: data.hospital,
+      city: data.city,
+      units: data.units,
+      description: data.description,
+      contact: data.contact,
       status: "active",
       donors: [],
-      createdAt: new Date(),
-      updatedAt: new Date()
+      totalDonors: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    const result = await db.collection("bloodRequests").insertOne(request);
+    const result = await db.collection("bloodRequests").insertOne(newRequest);
 
     if (!result.insertedId) {
-      throw new Error("İstek oluşturulamadı");
+      throw new Error("Kan isteği oluşturulamadı");
     }
 
     return NextResponse.json(
-      { message: "İstek başarıyla oluşturuldu", id: result.insertedId },
+      { message: "Kan isteği başarıyla oluşturuldu" },
       { status: 201 }
     );
 
   } catch (error) {
-    console.error("Kan bağışı isteği oluşturma hatası:", error);
+    console.error("Kan isteği oluşturma hatası:", error);
     return NextResponse.json(
-      { error: "Kan bağışı isteği oluşturulamadı" },
+      { error: "Kan isteği oluşturulurken bir hata oluştu" },
       { status: 500 }
     );
   }
@@ -72,8 +66,8 @@ export async function GET(req: Request) {
         {
           $lookup: {
             from: "users",
-            localField: "requesterEmail",
-            foreignField: "email",
+            localField: "userId",
+            foreignField: "_id",
             as: "requester"
           }
         },
@@ -96,7 +90,7 @@ export async function GET(req: Request) {
             donors: 1,
             createdAt: 1,
             updatedAt: 1,
-            requesterEmail: 1,
+            userId: 1,
             requesterName: 1
           }
         },

@@ -1,39 +1,31 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { connectToDatabase } from '@/lib/mongodb'
-import { authOptions } from '@/lib/auth'
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return new NextResponse('Unauthorized', { status: 401 })
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Oturum açmanız gerekiyor" },
+        { status: 401 }
+      );
     }
 
-    const { db } = await connectToDatabase()
-    
-    // URL'den status parametresini al
-    const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
+    const { db } = await connectToDatabase();
 
-    // Query oluştur
-    const query: any = {
-      requesterEmail: session.user.email
-    }
-
-    // Eğer status parametresi varsa, query'e ekle
-    if (status) {
-      query.status = status
-    }
-    
-    const requests = await db.collection('bloodRequests')
-      .find(query)
+    const requests = await db.collection("bloodRequests")
+      .find({ userId: session.user.id })
       .sort({ createdAt: -1 })
-      .toArray()
+      .toArray();
 
-    return NextResponse.json(requests)
+    return NextResponse.json(requests);
   } catch (error) {
-    console.error('İstekler getirilirken hata:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    console.error("İstekleri getirme hatası:", error);
+    return NextResponse.json(
+      { error: "İstekler yüklenirken bir hata oluştu" },
+      { status: 500 }
+    );
   }
 } 

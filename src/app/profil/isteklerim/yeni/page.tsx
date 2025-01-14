@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Heart } from "lucide-react";
+import { CITIES } from "@/lib/constants";
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -85,22 +86,22 @@ export default function NewRequestPage() {
                 </select>
               </div>
 
-              <div className="space-y-2">
+              <div className="grid gap-2">
                 <Label htmlFor="city">Şehir</Label>
                 <select
                   id="city"
                   name="city"
                   value={formData.city}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   required
                 >
                   <option value="">Şehir Seçin</option>
-                  <option value="İstanbul">İstanbul</option>
-                  <option value="Ankara">Ankara</option>
-                  <option value="İzmir">İzmir</option>
-                  <option value="Bursa">Bursa</option>
-                  <option value="Antalya">Antalya</option>
+                  {CITIES.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

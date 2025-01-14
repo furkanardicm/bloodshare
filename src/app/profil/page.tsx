@@ -11,16 +11,12 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface Stats {
-  donations: {
-    completed: number
-    pending: number
-    total: number
-  }
-  requests: {
-    active: number
-    completed: number
-    total: number
-  }
+  totalRequests: number
+  activeRequests: number
+  completedRequests: number
+  totalDonations: number
+  pendingDonations: number
+  completedDonations: number
 }
 
 export default function ProfilePage() {
@@ -33,34 +29,46 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        setLoading(true)
-        setError(null)
-        const response = await fetch('/api/users/stats')
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null)
-          throw new Error(errorData?.error || 'İstatistikler yüklenirken bir hata oluştu')
+        setLoading(true);
+        setError(null);
+
+        const [requestsResponse, donationsResponse] = await Promise.all([
+          fetch('/api/blood-requests/my-requests'),
+          fetch('/api/blood-requests/my-donations')
+        ]);
+
+        if (!requestsResponse.ok || !donationsResponse.ok) {
+          throw new Error('İstatistikler yüklenirken bir hata oluştu');
         }
-        
-        const data = await response.json()
-        setStats(data)
+
+        const requests = await requestsResponse.json();
+        const donations = await donationsResponse.json();
+
+        setStats({
+          totalRequests: requests.length,
+          activeRequests: requests.filter((r: any) => r.status === 'active').length,
+          completedRequests: requests.filter((r: any) => r.status === 'completed').length,
+          totalDonations: donations.length,
+          pendingDonations: donations.filter((d: any) => d.status === 'pending').length,
+          completedDonations: donations.filter((d: any) => d.status === 'completed').length
+        });
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Bir hata oluştu'
-        setError(message)
+        const message = error instanceof Error ? error.message : 'Bir hata oluştu';
+        setError(message);
         toast({
           variant: "destructive",
           title: "Hata!",
           description: message
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    if (session?.user?.email) {
-      fetchStats()
+    if (session?.user?.id) {
+      fetchStats();
     }
-  }, [session, toast])
+  }, [session, toast]);
 
   if (loading) {
     return <Loading />
@@ -117,16 +125,16 @@ export default function ProfilePage() {
             <Heart className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.donations.total}</div>
+            <div className="text-2xl font-bold">{stats.totalDonations}</div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-                <span>Tamamlanan: {stats.donations.completed}</span>
+                <span>Tamamlanan: {stats.completedDonations}</span>
               </div>
               <div>•</div>
               <div className="flex items-center">
                 <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-                <span>Bekleyen: {stats.donations.pending}</span>
+                <span>Bekleyen: {stats.pendingDonations}</span>
               </div>
             </div>
           </CardContent>
@@ -140,16 +148,16 @@ export default function ProfilePage() {
             <ListTodo className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.requests.total}</div>
+            <div className="text-2xl font-bold">{stats.totalRequests}</div>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-                <span>Aktif: {stats.requests.active}</span>
+                <span>Aktif: {stats.activeRequests}</span>
               </div>
               <div>•</div>
               <div className="flex items-center">
                 <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-                <span>Tamamlanan: {stats.requests.completed}</span>
+                <span>Tamamlanan: {stats.completedRequests}</span>
               </div>
             </div>
           </CardContent>

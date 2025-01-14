@@ -13,8 +13,8 @@ import { useSession } from "next-auth/react"
 
 interface BloodRequest {
   _id: string
+  userId: string
   requesterName: string
-  requesterEmail: string
   bloodType: string
   hospital: string
   city: string
@@ -30,12 +30,16 @@ interface BloodRequest {
 }
 
 function maskName(name: string): string {
-  if (!name) return 'İsimsiz';
+  if (!name || name === 'İsimsiz') return 'İsimsiz';
+  
   const parts = name.split(' ');
+  if (parts.length === 0) return 'İsimsiz';
+  
   const maskedParts = parts.map(part => {
-    if (part.length <= 1) return part;
-    return part[0] + '*'.repeat(part.length - 1);
+    if (part.length <= 2) return part;
+    return part[0] + '*'.repeat(part.length - 2) + part[part.length - 1];
   });
+  
   return maskedParts.join(' ');
 }
 
@@ -56,10 +60,15 @@ export default function NeedsPage() {
     async function fetchRequests() {
       try {
         const response = await fetch('/api/blood-requests/active')
-        if (!response.ok) throw new Error('İhtiyaçlar yüklenirken bir hata oluştu')
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'İhtiyaçlar yüklenirken bir hata oluştu');
+        }
         const data = await response.json()
+        console.log("Gelen veriler:", data);
         setRequests(data)
       } catch (error) {
+        console.error("Hata detayı:", error);
         toast({
           variant: "destructive",
           title: "Hata!",
@@ -257,27 +266,31 @@ export default function NeedsPage() {
                           <span className="font-medium">{request.donors?.length || 0} Bağışçı</span>
                         </div>
                         <div className="flex flex-col gap-2">
-                          {request.requesterEmail === session?.user?.email && request.status !== 'completed' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => handleCompleteRequest(request._id)}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Bağış Tamamlandı
-                            </Button>
-                          ) : request.status !== 'completed' ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => handleDonorSignup(request._id)}
-                            >
-                              <UserPlus className="w-4 h-4 mr-2" />
-                              Bağışçı Ol
-                            </Button>
-                          ) : null}
+                          {request.userId === session?.user?.id ? (
+                            request.status !== 'completed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => handleCompleteRequest(request._id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Bağışı Tamamla
+                              </Button>
+                            )
+                          ) : (
+                            request.status !== 'completed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => handleDonorSignup(request._id)}
+                              >
+                                <UserPlus className="w-4 h-4 mr-2" />
+                                Bağışçı Ol
+                              </Button>
+                            )
+                          )}
                         </div>
                       </div>
                     </div>

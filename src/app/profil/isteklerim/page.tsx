@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import type { BloodRequest } from "@/types/user"
 import Link from "next/link"
+import { CITIES } from "@/lib/constants";
 
 export default function MyRequestsPage() {
   const [requests, setRequests] = useState<BloodRequest[]>([])

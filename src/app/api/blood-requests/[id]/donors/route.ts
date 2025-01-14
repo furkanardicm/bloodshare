@@ -12,6 +12,7 @@ interface Donor {
 
 interface BloodRequest {
   _id: ObjectId;
+  userId: string;
   donors: Donor[];
 }
 
@@ -40,6 +41,14 @@ export async function POST(
       return NextResponse.json(
         { error: "İstek bulunamadı" },
         { status: 404 }
+      );
+    }
+
+    // Kendi isteğine bağışçı olmayı engelle
+    if (request.userId.toString() === session.user.id) {
+      return NextResponse.json(
+        { error: "Kendi isteğinize bağışçı olamazsınız" },
+        { status: 400 }
       );
     }
 

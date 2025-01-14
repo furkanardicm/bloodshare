@@ -1,69 +1,80 @@
 import mongoose from "mongoose";
-import { Document, Types } from "mongoose";
-import { User } from "./User";
 
-// Şemayı temizle ve yeniden oluştur
-if (mongoose.models.BloodRequest) {
-  delete mongoose.models.BloodRequest;
-}
-
-export interface IBloodRequest extends Document {
-  userId: Types.ObjectId;
-  bloodType: string;
-  hospital: string;
-  city: string;
-  units: number;
-  description: string;
-  contact: string;
-  status: 'active' | 'completed';
-  isDonation: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const bloodRequestSchema = new mongoose.Schema<IBloodRequest>({
+const donorSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: User,
-    required: [true, 'Kullanıcı ID alanı zorunludur'],
-  },
-  bloodType: {
-    type: String,
-    required: [true, 'Kan grubu alanı zorunludur'],
-    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'],
-  },
-  hospital: {
-    type: String,
-    required: [true, 'Hastane alanı zorunludur'],
-  },
-  city: {
-    type: String,
-    required: [true, 'Şehir alanı zorunludur'],
-  },
-  units: {
-    type: Number,
-    required: [true, 'Ünite alanı zorunludur'],
-    min: [1, 'En az 1 ünite kan gereklidir'],
-  },
-  description: {
-    type: String,
-    required: [true, 'Açıklama alanı zorunludur'],
-  },
-  contact: {
-    type: String,
-    required: [true, 'İletişim alanı zorunludur'],
+    ref: "User",
+    required: true,
   },
   status: {
     type: String,
-    enum: ['active', 'completed'],
-    default: 'active',
+    enum: ["pending", "completed"],
+    default: "pending",
   },
-  isDonation: {
-    type: Boolean,
-    default: false,
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
-}, {
-  timestamps: true,
-});
+})
 
-export const BloodRequest = mongoose.models.BloodRequest || mongoose.model<IBloodRequest>('BloodRequest', bloodRequestSchema); 
+const bloodRequestSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    bloodType: {
+      type: String,
+      required: true,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],
+    },
+    hospital: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    units: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    contact: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["active", "completed"],
+      default: "active",
+    },
+    donors: [donorSchema],
+    totalDonors: {
+      type: Number,
+      default: 0,
+    },
+    completedAt: {
+      type: Date,
+    },
+  },
+  {
+    timestamps: true,
+  }
+)
+
+// Toplam bağışçı sayısını güncelle
+bloodRequestSchema.pre("save", function (next) {
+  if (this.isModified("donors")) {
+    this.totalDonors = this.donors.length
+  }
+  next()
+})
+
+export default mongoose.models.BloodRequest || mongoose.model("BloodRequest", bloodRequestSchema) 

@@ -1,47 +1,59 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { connect } from '@/lib/mongodb';
-import { BloodRequest } from '@/models/BloodRequest';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Oturum açmanız gerekiyor' },
+        { error: "Oturum açmanız gerekiyor" },
         { status: 401 }
       );
     }
 
-    const { bloodType, hospital, city, units, description, contact } = await request.json();
+    const { bloodType, hospital, city, units, description, contact } = await req.json();
 
+    // Validasyon kontrolleri
     if (!bloodType || !hospital || !city || !units || !description || !contact) {
       return NextResponse.json(
-        { error: 'Tüm alanlar zorunludur' },
+        { error: "Tüm alanları doldurun" },
         { status: 400 }
       );
     }
 
-    await connect();
+    const { db } = await connectToDatabase();
 
-    const bloodRequest = await BloodRequest.create({
-      userId: session.user.id,
+    const request = {
       bloodType,
       hospital,
       city,
-      units,
+      units: parseInt(units),
       description,
       contact,
-      status: 'active'
-    });
+      requesterEmail: session.user.email,
+      status: "active",
+      donors: [],
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
 
-    return NextResponse.json(bloodRequest);
-  } catch (error) {
-    console.error('Kan ihtiyacı oluşturulurken hata:', error);
+    const result = await db.collection("bloodRequests").insertOne(request);
+
+    if (!result.insertedId) {
+      throw new Error("İstek oluşturulamadı");
+    }
+
     return NextResponse.json(
-      { error: 'Kan ihtiyacı oluşturulurken bir hata oluştu' },
+      { message: "İstek başarıyla oluşturuldu", id: result.insertedId },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error("Kan bağışı isteği oluşturma hatası:", error);
+    return NextResponse.json(
+      { error: "Kan bağışı isteği oluşturulamadı" },
       { status: 500 }
     );
   }
@@ -49,22 +61,54 @@ export async function POST(request: Request) {
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Yetkilendirme gerekli" }, { status: 401 });
-    }
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status") || "active";
+    
+    const { db } = await connectToDatabase();
 
-    await connect();
+    const requests = await db.collection("bloodRequests")
+      .aggregate([
+        { $match: { status } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "requesterEmail",
+            foreignField: "email",
+            as: "requester"
+          }
+        },
+        {
+          $addFields: {
+            requesterName: { $arrayElemAt: ["$requester.name", 0] }
+          }
+        },
+        {
+          $project: {
+            requester: 0,
+            _id: 1,
+            bloodType: 1,
+            hospital: 1,
+            city: 1,
+            units: 1,
+            description: 1,
+            contact: 1,
+            status: 1,
+            donors: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            requesterEmail: 1,
+            requesterName: 1
+          }
+        },
+        { $sort: { createdAt: -1 } }
+      ])
+      .toArray();
 
-    const bloodRequests = await BloodRequest.find({
-      userId: session.user.id,
-    }).sort({ createdAt: -1 });
-
-    return NextResponse.json(bloodRequests);
+    return NextResponse.json(requests);
   } catch (error) {
-    console.error("Kan bağışı istekleri alınırken hata:", error);
+    console.error("İstekleri getirme hatası:", error);
     return NextResponse.json(
-      { error: "Kan bağışı istekleri alınamadı" },
+      { error: "İstekler yüklenirken bir hata oluştu" },
       { status: 500 }
     );
   }

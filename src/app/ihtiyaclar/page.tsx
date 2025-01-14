@@ -3,19 +3,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
+import { Search, UserPlus, CheckCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Loading } from "@/components/ui/loading"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
+import { useSession } from "next-auth/react"
 
 interface BloodRequest {
   _id: string
-  userId: {
-    _id: string
-    name: string
-  }
+  requesterName: string
+  requesterEmail: string
   bloodType: string
   hospital: string
   city: string
@@ -24,6 +23,10 @@ interface BloodRequest {
   contact: string
   status: string
   createdAt: string
+  donors?: Array<{
+    email: string
+    status: string
+  }>
 }
 
 function maskName(name: string): string {
@@ -43,6 +46,7 @@ export default function NeedsPage() {
   const [bloodType, setBloodType] = useState<string>("all")
   const [city, setCity] = useState<string>("")
   const { toast } = useToast()
+  const { data: session } = useSession()
 
   // Benzersiz şehirleri al ve alfabetik sırala
   const uniqueCities = Array.from(new Set(requests.map(request => request.city)))
@@ -75,8 +79,73 @@ export default function NeedsPage() {
       request.hospital.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesBloodType = bloodType === "all" || request.bloodType === bloodType
     const matchesCity = !city || request.city.toLowerCase() === city.toLowerCase()
-    return matchesSearch && matchesBloodType && matchesCity
+    const isActive = request.status === 'active'
+    return matchesSearch && matchesBloodType && matchesCity && isActive
   })
+
+  const handleDonorSignup = async (requestId: string) => {
+    try {
+      if (!session?.user?.email) {
+        toast({
+          variant: "destructive",
+          title: "Hata!",
+          description: "Bağışçı olmak için giriş yapmalısınız."
+        })
+        return
+      }
+
+      const response = await fetch(`/api/blood-requests/${requestId}/donors`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || 'Bağışçı kaydı yapılırken bir hata oluştu')
+      }
+      
+      const updatedRequest = await response.json()
+      setRequests(prev => prev.map(req => 
+        req._id === requestId ? updatedRequest : req
+      ))
+
+      toast({
+        title: "Başarılı!",
+        description: "Bağış talebiniz kaydedildi.",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Hata!",
+        description: error instanceof Error ? error.message : 'Bir hata oluştu'
+      })
+    }
+  }
+
+  const handleCompleteRequest = async (requestId: string) => {
+    try {
+      const response = await fetch(`/api/blood-requests/${requestId}/complete`, {
+        method: 'POST',
+      })
+      
+      if (!response.ok) throw new Error('İstek tamamlanırken bir hata oluştu')
+      
+      const updatedRequest = await response.json()
+      setRequests(prev => prev.map(req => 
+        req._id === requestId ? { ...req, status: 'completed' } : req
+      ))
+
+      toast({
+        title: "Başarılı!",
+        description: "Kan bağışı tamamlandı olarak işaretlendi.",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Hata!",
+        description: error instanceof Error ? error.message : 'Bir hata oluştu'
+      })
+    }
+  }
 
   if (loading) {
     return <Loading />
@@ -114,7 +183,7 @@ export default function NeedsPage() {
                   value={bloodType}
                   onChange={(e) => setBloodType(e.target.value)}
                 >
-                  <option value="">Kan Grubu</option>
+                  <option value="all">Tüm Kan Grupları</option>
                   <option value="A+">A RH+</option>
                   <option value="A-">A RH-</option>
                   <option value="B+">B RH+</option>
@@ -161,8 +230,8 @@ export default function NeedsPage() {
                     className="p-4 border border-border rounded-lg bg-card"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-foreground">
+                      <div className="flex-1 min-w-0 mr-2">
+                        <h3 className="font-semibold text-foreground truncate">
                           {request.hospital} - {request.city}
                         </h3>
                         <p className="text-sm text-muted-foreground">
@@ -171,17 +240,46 @@ export default function NeedsPage() {
                           })}
                         </p>
                       </div>
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400 whitespace-nowrap">
                         {request.bloodType}
                       </span>
                     </div>
-                    <p className="text-sm text-foreground mb-2">
+                    <p className="text-sm text-foreground mb-2 line-clamp-2">
                       {request.description}
                     </p>
                     <div className="text-sm text-muted-foreground">
-                      <p>İhtiyaç: {request.units} ünite</p>
-                      <p>İletişim: {request.contact}</p>
-                      <p>İsteyen: {maskName(request.userId.name)}</p>
+                      <p className="truncate">İhtiyaç: {request.units} ünite</p>
+                      <p className="truncate">İletişim: {request.contact}</p>
+                      <p className="truncate">İsteyen: {maskName(request.requesterName)}</p>
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span>Bağışçılar:</span>
+                          <span className="font-medium">{request.donors?.length || 0} Bağışçı</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {request.requesterEmail === session?.user?.email && request.status !== 'completed' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => handleCompleteRequest(request._id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Bağış Tamamlandı
+                            </Button>
+                          ) : request.status !== 'completed' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => handleDonorSignup(request._id)}
+                            >
+                              <UserPlus className="w-4 h-4 mr-2" />
+                              Bağışçı Ol
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

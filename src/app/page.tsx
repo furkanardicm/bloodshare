@@ -135,12 +135,12 @@ export default function Home() {
             { icon: Users, title: 'Mobil Uyumlu', desc: 'Her cihazda sorunsuz çalışan modern arayüz ile her an ulaşılabilir.' }
           ].map((feature, i) => (
             <div key={i} className="relative group">
-              <div className="bg-card p-8 rounded-xl relative border border-border hover:border-red-500/20 transition-colors duration-300">
+              <div className="text-wrap bg-card p-8 rounded-xl relative border border-border hover:border-red-500/20 transition-colors duration-300 whitespace-pre-wrap">
                 <div className="bg-accent/50 p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
                   {React.createElement(feature.icon, { className: "w-6 h-6 text-red-500 dark:text-red-400" })}
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.desc}</p>
+                <h3 className="text-xl font-semibold text-foreground mb-2 text-pretty">{feature.title}</h3>
+                <p className="text-muted-foreground  text-pretty">{feature.desc}</p>
               </div>
             </div>
           ))}

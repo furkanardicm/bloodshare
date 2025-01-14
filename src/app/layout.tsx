@@ -4,6 +4,8 @@ import './globals.css';
 import Header from '@/components/layout/Header';
 import Providers from '@/components/providers/Providers';
 import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "next-themes";
+import { Toaster as SonnerToaster } from 'sonner';
 
 const poppins = Poppins({ 
   weight: ['400', '500', '600', '700'],
@@ -24,13 +26,21 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body className={`${poppins.className} antialiased`}>
-        <Providers>
-          <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
-            <Header />
-            <main className="dark:bg-black">{children}</main>
-            <Toaster />
-          </div>
-        </Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
+              <Header />
+              <main className="dark:bg-black">{children}</main>
+              <Toaster />
+              <SonnerToaster />
+            </div>
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

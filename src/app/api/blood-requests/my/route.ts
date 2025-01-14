@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { connect } from "@/lib/mongodb"
-import { BloodRequest } from "@/models/BloodRequest"
+import { connectToDatabase } from "@/lib/mongodb"
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Oturum açmanız gerekiyor" },
         { status: 401 }
       )
     }
 
-    await connect()
-    const requests = await BloodRequest.find({ userId: session.user.id })
+    const { db } = await connectToDatabase()
+    const requests = await db.collection('bloodRequests')
+      .find({ requesterEmail: session.user.email })
       .sort({ createdAt: -1 })
+      .toArray()
 
     return NextResponse.json(requests)
   } catch (error) {

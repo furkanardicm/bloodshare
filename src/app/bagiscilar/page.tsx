@@ -24,6 +24,10 @@ export default function DonorsPage() {
   const [city, setCity] = useState<string>("")
   const { toast } = useToast()
 
+  // Benzersiz şehirleri al ve alfabetik sırala
+  const uniqueCities = Array.from(new Set(donors.map(donor => donor.city)))
+    .sort((a, b) => a.localeCompare(b, 'tr'))
+
   useEffect(() => {
     async function fetchDonors() {
       try {
@@ -48,7 +52,8 @@ export default function DonorsPage() {
   const filteredDonors = donors.filter((donor) => {
     const matchesSearch = donor.city.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesBloodType = bloodType === "all" || donor.bloodType === bloodType
-    return matchesSearch && matchesBloodType
+    const matchesCity = !city || donor.city.toLowerCase() === city.toLowerCase()
+    return matchesSearch && matchesBloodType && matchesCity
   })
 
   if (loading) {
@@ -87,7 +92,7 @@ export default function DonorsPage() {
                   value={bloodType}
                   onChange={(e) => setBloodType(e.target.value)}
                 >
-                  <option value="">Kan Grubu</option>
+                  <option value="all">Tüm Kan Grupları</option>
                   <option value="A+">A RH+</option>
                   <option value="A-">A RH-</option>
                   <option value="B+">B RH+</option>
@@ -104,11 +109,12 @@ export default function DonorsPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 >
-                  <option value="">Şehir</option>
-                  <option value="istanbul">İstanbul</option>
-                  <option value="ankara">Ankara</option>
-                  <option value="izmir">İzmir</option>
-                  <option value="bursa">Bursa</option>
+                  <option value="">Tüm Şehirler</option>
+                  {uniqueCities.map((cityName) => (
+                    <option key={cityName} value={cityName.toLowerCase()}>
+                      {cityName}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

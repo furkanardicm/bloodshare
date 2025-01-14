@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
-import { connect } from '@/lib/mongodb';
-import { User } from '@/models/User';
+import { connectToDatabase } from '@/lib/mongodb';
 
 export async function GET() {
   try {
-    await connect();
-
-    const donors = await User.find({ isDonor: true })
-      .select('name bloodType city lastDonationDate')
+    const { db } = await connectToDatabase();
+    
+    const donors = await db.collection('users')
+      .find({ isDonor: true })
+      .project({
+        name: 1,
+        bloodType: 1,
+        city: 1,
+        lastDonationDate: 1
+      })
       .sort({ lastDonationDate: -1 })
-      .lean();
+      .toArray();
 
     return NextResponse.json(donors);
   } catch (error) {

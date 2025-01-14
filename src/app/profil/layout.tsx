@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { User, Heart, History, Settings, Menu, ChevronRight } from 'lucide-react';
+import { User, Heart, History, Settings, Menu, ChevronRight, ListTodo } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation'
@@ -29,6 +29,34 @@ export default function ProfileLayout({
   } else if (pathname.includes('/ayarlar')) {
     breadcrumbItems.push({ title: 'Ayarlar', href: '/profil/ayarlar' })
   }
+
+  const menuItems = [
+    {
+      title: "Profilim",
+      href: "/profil",
+      icon: User,
+    },
+    {
+      title: "İsteklerim",
+      href: "/profil/isteklerim",
+      icon: ListTodo,
+    },
+    {
+      title: "Bağışlarım",
+      href: "/profil/bagislarim",
+      icon: Heart,
+    },
+    {
+      title: "Geçmiş",
+      href: "/profil/gecmis",
+      icon: History,
+    },
+    {
+      title: "Ayarlar",
+      href: "/profil/ayarlar",
+      icon: Settings,
+    },
+  ]
 
   return (
     <div className="min-h-screen bg-background">

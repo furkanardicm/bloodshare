@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connect } from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
 import { User } from '@/models/User';
 
 export async function PUT(request: Request) {
@@ -14,7 +14,7 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { name, email, phone, bloodType, isDonor } = data;
 
-    await connect();
+    const { db } = await connectToDatabase();
 
     const user = await User.findById(session.user.id);
     if (!user) {
@@ -58,7 +58,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Oturum açmanız gerekiyor' }, { status: 401 });
     }
 
-    await connect();
+    const { db } = await connectToDatabase();
 
     const user = await User.findById(session.user.id);
     if (!user) {

@@ -1,7 +1,7 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import { connect } from '@/lib/mongodb';
+import { connectToDatabase } from "@/lib/mongodb";
 import { User } from '@/models/User';
 import bcrypt from 'bcryptjs';
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await connect();
+    await connectToDatabase();
 
     const existingUser = await User.findOne({ email });
 

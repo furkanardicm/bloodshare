@@ -1,251 +1,160 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useToast } from '@/components/ui/use-toast';
-import { ChevronRight, Home, Edit2, Save } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { Loading } from "@/components/ui/loading"
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
+import { Heart, ListTodo, CheckCircle, Clock, AlertCircle, Plus } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface Stats {
-  activeRequests: number;
-  completedRequests: number;
-  totalDonations: number;
-}
-
-interface UserData {
-  name: string;
-  email: string;
-  phone: string;
-  bloodType: string;
-  isDonor: boolean;
+  donations: {
+    completed: number
+    pending: number
+    total: number
+  }
+  requests: {
+    active: number
+    completed: number
+    total: number
+  }
 }
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
-  const { toast } = useToast();
-  const [stats, setStats] = useState<Stats>({ activeRequests: 0, completedRequests: 0, totalDonations: 0 });
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [userData, setUserData] = useState<UserData>({
-    name: session?.user?.name || '',
-    email: session?.user?.email || '',
-    phone: session?.user?.phone || '',
-    bloodType: session?.user?.bloodType || '',
-    isDonor: session?.user?.isDonor || false
-  });
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
+  const { data: session } = useSession()
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchStats();
-      fetchUserData();
+    async function fetchStats() {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch('/api/users/stats')
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null)
+          throw new Error(errorData?.error || 'İstatistikler yüklenirken bir hata oluştu')
+        }
+        
+        const data = await response.json()
+        setStats(data)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Bir hata oluştu'
+        setError(message)
+        toast({
+          variant: "destructive",
+          title: "Hata!",
+          description: message
+        })
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [session?.user?.id]);
 
-  const fetchUserData = async () => {
-    try {
-      const response = await fetch('/api/users/profile');
-      if (!response.ok) throw new Error('Kullanıcı bilgileri getirilemedi');
-      const data = await response.json();
-      setUserData(data);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'Kullanıcı bilgileri getirilirken bir hata oluştu'
-      });
+    if (session?.user?.email) {
+      fetchStats()
     }
-  };
+  }, [session, toast])
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch('/api/users/stats');
-      if (!response.ok) throw new Error('İstatistikler getirilemedi');
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'İstatistikler getirilirken bir hata oluştu'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return <Loading />
+  }
 
-  const handleSubmit = async () => {
-    try {
-      const response = await fetch('/api/users/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData)
-      });
+  if (error) {
+    return (
+      <Alert variant="destructive" className="max-w-2xl mx-auto mt-8">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {error}
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
-      if (!response.ok) throw new Error('Profil güncellenemedi');
-
-      toast({
-        title: 'Başarılı',
-        description: 'Profil bilgileriniz güncellendi'
-      });
-
-      setIsEditing(false);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Hata',
-        description: 'Profil güncellenirken bir hata oluştu'
-      });
-    }
-  };
-
-  if (!session) return null;
+  if (!stats) {
+    return (
+      <Alert className="max-w-2xl mx-auto mt-8">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          İstatistik bulunamadı.
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
   return (
-    <>
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">
-          <Home className="w-4 h-4" />
+    <div className="container max-w-full py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Profilim</h1>
+        <Link href="/profil/isteklerim/yeni">
+          <Button className="bg-red-600 hover:bg-red-700 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Yeni İstek Oluştur
+          </Button>
         </Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-foreground">Profil</span>
+      </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground">
+          Hoş Geldin, {session?.user?.name}
+        </h1>
+        <p className="text-muted-foreground">
+          Kan bağışı istatistiklerinizi ve aktivitelerinizi buradan takip edebilirsiniz.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        {/* Kişisel Bilgiler */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-foreground">Kişisel Bilgiler</h2>
-            <Button
-              variant={isEditing ? "success" : "outline"}
-              onClick={() => {
-                if (isEditing) {
-                  handleSubmit();
-                } else {
-                  setIsEditing(true);
-                }
-              }}
-              className={cn(
-                "flex items-center gap-2 transition-all duration-200",
-                !isEditing && "border-blue-500 text-blue-600 hover:border-blue-600 hover:text-blue-500 dark:border-blue-400/50 dark:text-blue-400 dark:hover:border-blue-400 dark:hover:text-blue-300"
-              )}
-            >
-              {isEditing ? (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Kaydet</span>
-                </>
-              ) : (
-                <>
-                  <Edit2 className="w-4 h-4" />
-                  <span>Düzenle</span>
-                </>
-              )}
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">Ad Soyad</label>
-              {isEditing ? (
-                <Input
-                  value={userData.name}
-                  onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-                  className="bg-white dark:bg-[rgb(22,22,22)] border-gray-200 dark:border-[rgb(28,28,28)] text-gray-900 dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              ) : (
-                <p className="text-foreground">{userData.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">E-posta</label>
-              {isEditing ? (
-                <Input
-                  value={userData.email}
-                  onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                  className="bg-white dark:bg-[rgb(22,22,22)] border-gray-200 dark:border-[rgb(28,28,28)] text-gray-900 dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              ) : (
-                <p className="text-foreground">{userData.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">Telefon</label>
-              {isEditing ? (
-                <Input
-                  value={userData.phone}
-                  onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                  className="bg-white dark:bg-[rgb(22,22,22)] border-gray-200 dark:border-[rgb(28,28,28)] text-gray-900 dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-              ) : (
-                <p className="text-foreground">{userData.phone}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Kan Grubu
-                </label>
-                <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={userData.bloodType}
-                  onChange={(e) => setUserData({ ...userData, bloodType: e.target.value })}
-                  disabled={!isEditing}
-                >
-                  <option value="">Kan Grubu Seçin</option>
-                  <option value="A+">A RH+</option>
-                  <option value="A-">A RH-</option>
-                  <option value="B+">B RH+</option>
-                  <option value="B-">B RH-</option>
-                  <option value="AB+">AB RH+</option>
-                  <option value="AB-">AB RH-</option>
-                  <option value="0+">0 RH+</option>
-                  <option value="0-">0 RH-</option>
-                </select>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Toplam Bağış
+            </CardTitle>
+            <Heart className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.donations.total}</div>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center">
+                <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+                <span>Tamamlanan: {stats.donations.completed}</span>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Bağışçı Durumu
-                </label>
-                <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={userData.isDonor ? 'true' : 'false'}
-                  onChange={(e) => setUserData({ ...userData, isDonor: e.target.value === 'true' })}
-                  disabled={!isEditing}
-                >
-                  <option value="">Seçin</option>
-                  <option value="true">Bağışçı</option>
-                  <option value="false">Bağışçı Değil</option>
-                </select>
+              <div>•</div>
+              <div className="flex items-center">
+                <Clock className="mr-1 h-3 w-3 text-yellow-500" />
+                <span>Bekleyen: {stats.donations.pending}</span>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* İstatistikler */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h3 className="text-lg font-medium text-foreground mb-2">Aktif İstekler</h3>
-            <p className="text-3xl font-bold text-foreground">{stats.activeRequests}</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h3 className="text-lg font-medium text-foreground mb-2">Tamamlanan İstekler</h3>
-            <p className="text-3xl font-bold text-foreground">{stats.completedRequests}</p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h3 className="text-lg font-medium text-foreground mb-2">Toplam Bağış</h3>
-            <p className="text-3xl font-bold text-foreground">{stats.totalDonations}</p>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Toplam İstek
+            </CardTitle>
+            <ListTodo className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.requests.total}</div>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center">
+                <Clock className="mr-1 h-3 w-3 text-yellow-500" />
+                <span>Aktif: {stats.requests.active}</span>
+              </div>
+              <div>•</div>
+              <div className="flex items-center">
+                <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+                <span>Tamamlanan: {stats.requests.completed}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </>
-  );
+    </div>
+  )
 } 

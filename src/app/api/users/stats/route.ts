@@ -1,38 +1,92 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { connect } from '@/lib/mongodb';
-import { BloodRequest } from '@/models/BloodRequest';
+import { NextResponse } from 'next/server'
+import { connectToDatabase } from '@/lib/mongodb'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Oturum açmanız gerekiyor' },
-        { status: 401 }
-      );
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    await connect();
+    const { db } = await connectToDatabase()
+    const bloodRequests = db.collection('bloodRequests')
 
-    const [activeRequests, completedRequests, totalDonations] = await Promise.all([
-      BloodRequest.countDocuments({ userId: session.user.id, status: 'active' }),
-      BloodRequest.countDocuments({ userId: session.user.id, status: 'completed' }),
-      BloodRequest.countDocuments({ userId: session.user.id, isDonation: true })
-    ]);
+    // Bağış istatistiklerini al
+    const donations = await bloodRequests.aggregate([
+      { 
+        $match: { 
+          'donors.email': session.user.email
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            }
+          },
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'active'] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]).toArray()
 
-    return NextResponse.json({
-      activeRequests,
-      completedRequests,
-      totalDonations
-    });
+    // İstek istatistiklerini al
+    const requests = await bloodRequests.aggregate([
+      { 
+        $match: { 
+          requesterEmail: session.user.email
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            }
+          },
+          active: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'active'] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]).toArray()
+
+    const stats = {
+      donations: donations[0] ? {
+        total: donations[0].total,
+        completed: donations[0].completed,
+        pending: donations[0].pending
+      } : {
+        total: 0,
+        completed: 0,
+        pending: 0
+      },
+      requests: requests[0] ? {
+        total: requests[0].total,
+        completed: requests[0].completed,
+        active: requests[0].active
+      } : {
+        total: 0,
+        completed: 0,
+        active: 0
+      }
+    }
+
+    return NextResponse.json(stats)
   } catch (error) {
-    console.error('İstatistikler getirilirken hata:', error);
-    return NextResponse.json(
-      { error: 'İstatistikler getirilirken bir hata oluştu' },
-      { status: 500 }
-    );
+    console.error('Error fetching user stats:', error)
+    return new NextResponse('Internal Server Error', { status: 500 })
   }
 } 

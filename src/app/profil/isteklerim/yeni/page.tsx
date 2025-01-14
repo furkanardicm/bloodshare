@@ -1,83 +1,77 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Heart } from "lucide-react";
 
 export default function NewRequestPage() {
-  const { toast } = useToast()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [bloodType, setBloodType] = useState("")
-  const [city, setCity] = useState("")
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    bloodType: '',
+    hospital: '',
+    city: '',
+    units: '',
+    description: '',
+    contact: ''
+  });
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setLoading(true)
-
-    const formData = new FormData(event.currentTarget)
-    const data = {
-      bloodType: formData.get("bloodType"),
-      hospital: formData.get("hospital"),
-      city: formData.get("city"),
-      units: Number(formData.get("units")),
-      description: formData.get("description"),
-      contact: formData.get("contact"),
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const response = await fetch("/api/blood-requests", {
-        method: "POST",
+      const response = await fetch('/api/blood-requests', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
-      })
+        body: JSON.stringify(formData),
+      });
 
       if (!response.ok) {
-        throw new Error("Bir hata oluştu")
+        const error = await response.text();
+        throw new Error(error || 'Bir hata oluştu');
       }
 
-      toast({
-        title: "Başarılı!",
-        description: "Kan bağışı isteğiniz oluşturuldu.",
-      })
-
-      router.push("/profil/isteklerim")
-      router.refresh()
+      toast.success('İlan başarıyla oluşturuldu');
+      router.push('/profil/isteklerim');
     } catch (error) {
-      toast({
-        title: "Hata!",
-        description: "Kan bağışı isteği oluşturulamadı.",
-        variant: "destructive",
-      })
+      toast.error(error instanceof Error ? error.message : 'Bir hata oluştu');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   return (
-    <div className="p-6">
+    <div className="container py-8">
       <Card>
         <CardHeader>
           <CardTitle>Yeni Kan Bağışı İsteği</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Kan Grubu
-                </label>
+                <Label htmlFor="bloodType">Kan Grubu</Label>
                 <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={bloodType}
-                  onChange={(e) => setBloodType(e.target.value)}
+                  id="bloodType"
+                  name="bloodType"
+                  value={formData.bloodType}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  required
                 >
                   <option value="">Kan Grubu Seçin</option>
                   <option value="A+">A RH+</option>
@@ -90,37 +84,49 @@ export default function NewRequestPage() {
                   <option value="0-">0 RH-</option>
                 </select>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                  Şehir
-                </label>
+                <Label htmlFor="city">Şehir</Label>
                 <select
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  required
                 >
                   <option value="">Şehir Seçin</option>
-                  <option value="istanbul">İstanbul</option>
-                  <option value="ankara">Ankara</option>
-                  <option value="izmir">İzmir</option>
-                  <option value="bursa">Bursa</option>
+                  <option value="İstanbul">İstanbul</option>
+                  <option value="Ankara">Ankara</option>
+                  <option value="İzmir">İzmir</option>
+                  <option value="Bursa">Bursa</option>
+                  <option value="Antalya">Antalya</option>
                 </select>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="hospital">Hastane</Label>
-              <Input id="hospital" name="hospital" placeholder="Hastane adı" required />
+              <Input
+                id="hospital"
+                name="hospital"
+                value={formData.hospital}
+                onChange={handleChange}
+                placeholder="Hastane adı"
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="units">İhtiyaç Duyulan Ünite</Label>
               <Input
-                type="number"
                 id="units"
                 name="units"
-                placeholder="Ünite sayısı"
+                type="number"
                 min="1"
+                value={formData.units}
+                onChange={handleChange}
+                placeholder="Ünite sayısı"
                 required
               />
             </div>
@@ -130,7 +136,9 @@ export default function NewRequestPage() {
               <Textarea
                 id="description"
                 name="description"
-                placeholder="İsteğinizle ilgili detaylı bilgi verin"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="İhtiyaç detayları"
                 required
               />
             </div>
@@ -140,17 +148,24 @@ export default function NewRequestPage() {
               <Input
                 id="contact"
                 name="contact"
+                value={formData.contact}
+                onChange={handleChange}
                 placeholder="Telefon numarası"
                 required
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Oluşturuluyor..." : "İsteği Oluştur"}
+            <Button 
+              type="submit" 
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+              disabled={loading}
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              {loading ? 'İlan Oluşturuluyor...' : 'İsteği Oluştur'}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 } 

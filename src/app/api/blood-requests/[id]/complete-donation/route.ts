@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import dbConnect from '@/lib/db'
 import BloodRequest from '@/models/BloodRequest'
+import { User } from '@/models/User'
 import { authOptions } from '@/lib/auth'
 
 export async function POST(
@@ -29,7 +30,7 @@ export async function POST(
 
     // Bağışçıyı bul
     const donor = bloodRequest.donors.find(
-      (d: any) => d.userId.toString() === session.user.id
+      (d: any) => d.userId === session.user.id
     )
 
     if (!donor) {
@@ -52,6 +53,23 @@ export async function POST(
     }
 
     await bloodRequest.save()
+
+    // Kullanıcının istatistiklerini güncelle
+    await User.findByIdAndUpdate(
+      session.user.id,
+      { 
+        $set: { 
+          isDonor: true,
+          lastDonationDate: new Date()
+        },
+        $inc: { 
+          totalDonations: 1,
+          pendingDonations: -1,
+          completedDonations: 1
+        }
+      },
+      { new: true }
+    )
 
     return NextResponse.json(bloodRequest)
   } catch (error) {

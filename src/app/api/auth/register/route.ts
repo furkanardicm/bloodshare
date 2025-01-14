@@ -7,9 +7,9 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, phone, bloodType } = await request.json();
+    const { name, email, password, phone, bloodType, city, isDonor = true } = await request.json();
 
-    if (!name || !email || !password || !phone || !bloodType) {
+    if (!name || !email || !password || !phone || !bloodType || !city) {
       return NextResponse.json(
         { error: 'Tüm alanlar zorunludur' },
         { status: 400 }
@@ -35,6 +35,8 @@ export async function POST(request: Request) {
       password: hashedPassword,
       phone,
       bloodType,
+      city,
+      isDonor: Boolean(isDonor),
     });
 
     return NextResponse.json(
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
         email: user.email,
         phone: user.phone,
         bloodType: user.bloodType,
+        city: user.city,
         isDonor: user.isDonor,
       },
       { status: 201 }

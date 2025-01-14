@@ -11,6 +11,8 @@ export interface IUser extends Document {
   lastDonationDate?: Date;
   city?: string;
   totalDonations?: number;
+  pendingDonations?: number;
+  completedDonations?: number;
   helpedPeople?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -26,6 +28,8 @@ export interface IUserWithoutPassword {
   lastDonationDate?: Date;
   city?: string;
   totalDonations?: number;
+  pendingDonations?: number;
+  completedDonations?: number;
   helpedPeople?: number;
 }
 
@@ -63,6 +67,14 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
   },
   totalDonations: {
+    type: Number,
+    default: 0,
+  },
+  pendingDonations: {
+    type: Number,
+    default: 0,
+  },
+  completedDonations: {
     type: Number,
     default: 0,
   },

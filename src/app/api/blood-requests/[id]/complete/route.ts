@@ -1,51 +1,88 @@
-import { NextResponse } from 'next/server'
-import { connectToDatabase } from '@/lib/mongodb'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { ObjectId } from 'mongodb'
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { connectToDatabase } from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
+
+interface Donor {
+  userId: string;
+  status: string;
+}
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return new NextResponse('Unauthorized', { status: 401 })
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Oturum açmanız gerekiyor" },
+        { status: 401 }
+      );
     }
 
-    const { db } = await connectToDatabase()
-    const bloodRequests = db.collection('bloodRequests')
+    const { id } = params;
+    if (!id) {
+      return NextResponse.json(
+        { error: "İstek ID'si gerekli" },
+        { status: 400 }
+      );
+    }
 
-    // İsteği bul
-    const bloodRequest = await bloodRequests.findOne({
-      _id: new ObjectId(params.id),
-      requesterEmail: session.user.email
-    })
+    const { db } = await connectToDatabase();
+
+    // İsteğin mevcut olup olmadığını ve kullanıcıya ait olduğunu kontrol et
+    const bloodRequest = await db.collection("bloodRequests").findOne({
+      _id: new ObjectId(id),
+      userId: session.user.id
+    });
 
     if (!bloodRequest) {
-      return new NextResponse('Kan ihtiyacı bulunamadı veya bu işlem için yetkiniz yok', { status: 404 })
+      return NextResponse.json(
+        { error: "İstek bulunamadı" },
+        { status: 404 }
+      );
     }
 
     // İsteği tamamlandı olarak işaretle
-    const result = await bloodRequests.updateOne(
-      { _id: new ObjectId(params.id) },
+    const updatedRequest = await db.collection("bloodRequests").findOneAndUpdate(
+      { _id: new ObjectId(id) },
       { 
         $set: { 
-          status: 'completed',
-          completedAt: new Date()
-        } 
-      }
-    )
+          status: "completed",
+          completedAt: new Date(),
+          "donors.$[].status": "completed" // Tüm bağışçıları tamamlandı olarak işaretle
+        }
+      },
+      { returnDocument: "after" }
+    );
 
-    if (result.modifiedCount === 0) {
-      return new NextResponse('Güncelleme yapılamadı', { status: 400 })
+    // Bağışçıların completedDonations sayısını artır ve pendingDonations sayısını azalt
+    if (bloodRequest.donors && bloodRequest.donors.length > 0) {
+      const donorIds = bloodRequest.donors.map((donor: Donor) => new ObjectId(donor.userId));
+      await db.collection("users").updateMany(
+        { _id: { $in: donorIds } },
+        {
+          $inc: {
+            completedDonations: 1,
+            pendingDonations: -1
+          }
+        }
+      );
     }
 
-    const updatedRequest = await bloodRequests.findOne({ _id: new ObjectId(params.id) })
-    return NextResponse.json(updatedRequest)
+    // Güncellenmiş isteği tekrar çek
+    const finalRequest = await db.collection("bloodRequests").findOne({
+      _id: new ObjectId(id)
+    });
+
+    return NextResponse.json(finalRequest);
   } catch (error) {
-    console.error('Kan ihtiyacı tamamlanırken hata:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    console.error("İstek tamamlama hatası:", error);
+    return NextResponse.json(
+      { error: "İstek tamamlanırken bir hata oluştu" },
+      { status: 500 }
+    );
   }
 } 

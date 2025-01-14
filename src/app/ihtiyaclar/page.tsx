@@ -56,6 +56,11 @@ export default function NeedsPage() {
   const uniqueCities = Array.from(new Set(requests.map(request => request.city)))
     .sort((a, b) => a.localeCompare(b, 'tr'))
 
+  // Kullanıcının bağışçı olduğu ilanları kontrol et
+  const isUserDonor = (request: BloodRequest) => {
+    return request.donors?.some(donor => donor.email === session?.user?.email);
+  };
+
   useEffect(() => {
     async function fetchRequests() {
       try {
@@ -84,13 +89,17 @@ export default function NeedsPage() {
 
   const filteredRequests = requests.filter((request) => {
     const matchesSearch = 
-      request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.hospital.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesBloodType = bloodType === "all" || request.bloodType === bloodType
-    const matchesCity = !city || request.city.toLowerCase() === city.toLowerCase()
-    const isActive = request.status === 'active'
-    return matchesSearch && matchesBloodType && matchesCity && isActive
-  })
+      (request.city?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (request.hospital?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (request.bloodType?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (request.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+
+    const matchesBloodType = bloodType === "all" || request.bloodType === bloodType;
+    const matchesCity = !city || request.city === city;
+    const isActive = request.status === 'active';
+
+    return matchesSearch && matchesBloodType && matchesCity && isActive;
+  });
 
   const handleDonorSignup = async (requestId: string) => {
     try {
@@ -112,10 +121,20 @@ export default function NeedsPage() {
         throw new Error(error || 'Bağışçı kaydı yapılırken bir hata oluştu')
       }
       
-      const updatedRequest = await response.json()
-      setRequests(prev => prev.map(req => 
-        req._id === requestId ? updatedRequest : req
-      ))
+      // İlanı güncelle
+      const currentRequest = requests.find(req => req._id === requestId);
+      if (currentRequest) {
+        const updatedRequest = {
+          ...currentRequest,
+          donors: [...(currentRequest.donors || []), {
+            email: session.user.email,
+            status: 'pending'
+          }]
+        };
+        setRequests(prev => prev.map(req => 
+          req._id === requestId ? updatedRequest : req
+        ));
+      }
 
       toast({
         title: "Başarılı!",
@@ -175,20 +194,20 @@ export default function NeedsPage() {
 
         {/* Filters */}
         <div className="sticky top-20 z-10 bg-background border-y border-border py-4 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <div className="flex-1 relative w-full">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Şehir veya hastane ara..."
-                className="pl-9 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="pl-9 focus-visible:ring-0 focus-visible:ring-offset-0 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-4">
-              <div className="relative">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative flex-1 md:flex-none">
                 <select
-                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   value={bloodType}
                   onChange={(e) => setBloodType(e.target.value)}
                 >
@@ -203,15 +222,15 @@ export default function NeedsPage() {
                   <option value="0-">0 RH-</option>
                 </select>
               </div>
-              <div className="relative">
+              <div className="relative flex-1 md:flex-none">
                 <select
-                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 >
-                  <option value="">Şehir</option>
+                  <option value="">Tüm Şehirler</option>
                   {uniqueCities.map((cityName) => (
-                    <option key={cityName} value={cityName.toLowerCase()}>
+                    <option key={cityName} value={cityName}>
                       {cityName}
                     </option>
                   ))}
@@ -275,7 +294,7 @@ export default function NeedsPage() {
                                 onClick={() => handleCompleteRequest(request._id)}
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Bağışı Tamamla
+                                İsteği Tamamla
                               </Button>
                             )
                           ) : (
@@ -285,9 +304,10 @@ export default function NeedsPage() {
                                 size="sm"
                                 className="w-full"
                                 onClick={() => handleDonorSignup(request._id)}
+                                disabled={isUserDonor(request)}
                               >
                                 <UserPlus className="w-4 h-4 mr-2" />
-                                Bağışçı Ol
+                                {isUserDonor(request) ? 'Bağışçı Olundu' : 'Bağışçı Ol'}
                               </Button>
                             )
                           )}

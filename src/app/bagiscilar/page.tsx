@@ -12,7 +12,7 @@ interface User {
   _id: string
   name: string
   bloodType: string
-  city: string
+  city?: string
   lastDonationDate: string | null
 }
 
@@ -25,8 +25,8 @@ export default function DonorsPage() {
   const { toast } = useToast()
 
   // Benzersiz şehirleri al ve alfabetik sırala
-  const uniqueCities = Array.from(new Set(donors.map(donor => donor.city)))
-    .sort((a, b) => a.localeCompare(b, 'tr'))
+  const uniqueCities = Array.from(new Set(donors.filter(donor => donor.city).map(donor => donor.city)))
+    .sort((a, b) => a!.localeCompare(b!, 'tr'))
 
   useEffect(() => {
     async function fetchDonors() {
@@ -50,9 +50,9 @@ export default function DonorsPage() {
   }, [toast])
 
   const filteredDonors = donors.filter((donor) => {
-    const matchesSearch = donor.city.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = donor.city ? donor.city.toLowerCase().includes(searchQuery.toLowerCase()) : false
     const matchesBloodType = bloodType === "all" || donor.bloodType === bloodType
-    const matchesCity = !city || donor.city.toLowerCase() === city.toLowerCase()
+    const matchesCity = !city || (donor.city && donor.city.toLowerCase() === city.toLowerCase())
     return matchesSearch && matchesBloodType && matchesCity
   })
 
@@ -111,7 +111,7 @@ export default function DonorsPage() {
                 >
                   <option value="">Tüm Şehirler</option>
                   {uniqueCities.map((cityName) => (
-                    <option key={cityName} value={cityName.toLowerCase()}>
+                    <option key={cityName} value={cityName!.toLowerCase()}>
                       {cityName}
                     </option>
                   ))}
@@ -146,9 +146,11 @@ export default function DonorsPage() {
                         {donor.bloodType}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {donor.city}
-                    </p>
+                    {donor.city && (
+                      <p className="text-sm text-muted-foreground">
+                        {donor.city}
+                      </p>
+                    )}
                     {donor.lastDonationDate && (
                       <p className="text-sm text-muted-foreground mt-1">
                         Son bağış: {new Date(donor.lastDonationDate).toLocaleDateString('tr-TR')}

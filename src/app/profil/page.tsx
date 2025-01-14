@@ -32,25 +32,27 @@ export default function ProfilePage() {
         setLoading(true);
         setError(null);
 
-        const [requestsResponse, donationsResponse] = await Promise.all([
-          fetch('/api/blood-requests/my-requests'),
-          fetch('/api/blood-requests/my-donations')
-        ]);
-
-        if (!requestsResponse.ok || !donationsResponse.ok) {
-          throw new Error('İstatistikler yüklenirken bir hata oluştu');
+        // Kullanıcı bilgilerini al
+        const userResponse = await fetch('/api/users/me');
+        if (!userResponse.ok) {
+          throw new Error('Kullanıcı bilgileri alınamadı');
         }
+        const userData = await userResponse.json();
 
+        // İstek istatistiklerini al
+        const requestsResponse = await fetch('/api/blood-requests/my-requests');
+        if (!requestsResponse.ok) {
+          throw new Error('İstek istatistikleri alınamadı');
+        }
         const requests = await requestsResponse.json();
-        const donations = await donationsResponse.json();
 
         setStats({
           totalRequests: requests.length,
           activeRequests: requests.filter((r: any) => r.status === 'active').length,
           completedRequests: requests.filter((r: any) => r.status === 'completed').length,
-          totalDonations: donations.length,
-          pendingDonations: donations.filter((d: any) => d.status === 'pending').length,
-          completedDonations: donations.filter((d: any) => d.status === 'completed').length
+          totalDonations: userData.totalDonations || 0,
+          pendingDonations: userData.pendingDonations || 0,
+          completedDonations: userData.completedDonations || 0
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Bir hata oluştu';

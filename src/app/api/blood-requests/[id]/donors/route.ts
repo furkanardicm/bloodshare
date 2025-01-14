@@ -5,8 +5,10 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 
 interface Donor {
+  userId: string;
   email: string;
   name: string | null;
+  status: string;
   addedAt: Date;
 }
 
@@ -22,7 +24,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Oturum açmanız gerekiyor" },
         { status: 401 }
@@ -45,7 +47,7 @@ export async function POST(
     }
 
     // Kendi isteğine bağışçı olmayı engelle
-    if (request.userId.toString() === session.user.id) {
+    if (request.userId === session.user.id) {
       return NextResponse.json(
         { error: "Kendi isteğinize bağışçı olamazsınız" },
         { status: 400 }
@@ -54,7 +56,7 @@ export async function POST(
 
     // Bağışçı zaten eklenmiş mi kontrol et
     const existingDonor = request.donors?.find(
-      (donor) => donor.email === session.user.email
+      (donor) => donor.userId === session.user.id
     );
 
     if (existingDonor) {
@@ -66,8 +68,10 @@ export async function POST(
 
     // Yeni bağışçı
     const newDonor: Donor = {
+      userId: session.user.id,
       email: session.user.email,
       name: session.user.name,
+      status: 'pending',
       addedAt: new Date()
     };
 
@@ -80,6 +84,18 @@ export async function POST(
     if (!result.modifiedCount) {
       throw new Error("Bağışçı eklenemedi");
     }
+
+    // Kullanıcının isDonor alanını güncelle
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(session.user.id) },
+      { 
+        $set: { isDonor: true },
+        $inc: { 
+          pendingDonations: 1,
+          totalDonations: 1
+        }
+      }
+    );
 
     return NextResponse.json(
       { message: "Bağışçı olarak başarıyla eklendi" },

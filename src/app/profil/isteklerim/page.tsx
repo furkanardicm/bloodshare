@@ -1,6 +1,5 @@
 'use client';
 
-import { Breadcrumb } from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
@@ -45,11 +44,14 @@ export default function MyRequestsPage() {
         method: 'POST'
       })
 
-      if (!response.ok) throw new Error('İstek tamamlanırken bir hata oluştu')
+      const data = await response.json()
       
-      const updatedRequest = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'İstek tamamlanırken bir hata oluştu')
+      }
+      
       setRequests(prev => prev.map(request => 
-        request._id === requestId ? updatedRequest : request
+        request._id === requestId ? data : request
       ))
 
       toast({
@@ -71,13 +73,6 @@ export default function MyRequestsPage() {
 
   return (
     <div>
-      <Breadcrumb
-        items={[
-          { title: "Profil", href: "/profil" },
-          { title: "İsteklerim" }
-        ]}
-      />
-
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">İsteklerim</h1>
         <Link href="/profil/isteklerim/yeni">

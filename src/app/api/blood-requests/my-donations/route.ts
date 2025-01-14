@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import dbConnect from '@/lib/db'
 import BloodRequest from '@/models/BloodRequest'
+import { User } from '@/models/User'
 import { authOptions } from '@/lib/auth'
+
+interface Donor {
+  userId: string
+  email: string
+  status: string
+}
 
 export async function GET(request: Request) {
   try {
@@ -21,20 +28,48 @@ export async function GET(request: Request) {
     const status = searchParams.get('status')
 
     // Query oluştur
-    const query: any = {
-      'donors.userId': session.user.id,
+    let query: any = {
+      donors: {
+        $elemMatch: {
+          userId: session.user.id
+        }
+      }
     }
 
-    // Eğer status parametresi varsa, query'e ekle
+    // Eğer status parametresi varsa, query'i güncelle
     if (status) {
-      query.status = status
+      query = {
+        donors: {
+          $elemMatch: {
+            userId: session.user.id,
+            status: status
+          }
+        }
+      }
     }
 
     const donations = await BloodRequest.find(query)
       .sort({ createdAt: -1 })
       .populate('userId', 'name')
 
-    return NextResponse.json(donations)
+    // Her bağış için kullanıcının durumunu kontrol et
+    const processedDonations = donations.map(donation => {
+      const userDonation = donation.donors.find((d: Donor) => d.userId === session.user.id)
+      return {
+        ...donation.toObject(),
+        donorStatus: userDonation?.status || 'pending'
+      }
+    })
+
+    // Kullanıcının bekleyen bağış sayısını güncelle
+    const pendingCount = processedDonations.filter(d => d.donorStatus === 'pending').length
+    await User.findByIdAndUpdate(
+      session.user.id,
+      { $set: { pendingDonations: pendingCount } },
+      { new: true }
+    )
+
+    return NextResponse.json(processedDonations)
   } catch (error) {
     console.error('Bağışlar getirilirken hata:', error)
     return NextResponse.json(

@@ -128,12 +128,11 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalDonations}</div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
                 <span>Tamamlanan: {stats.completedDonations}</span>
               </div>
-              <div>•</div>
               <div className="flex items-center">
                 <Clock className="mr-1 h-3 w-3 text-yellow-500" />
                 <span>Bekleyen: {stats.pendingDonations}</span>

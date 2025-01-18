@@ -18,8 +18,28 @@ const userSchema = new Schema({
   image: String,
   bloodType: String,
   city: String,
-  lastDonationDate: Date,
-  donationCount: {
+  phone: String,
+  isAvailable: {
+    type: Boolean,
+    default: true
+  },
+  lastDonationDate: {
+    type: Date,
+    default: null
+  },
+  totalDonations: {
+    type: Number,
+    default: 0
+  },
+  helpedPeople: {
+    type: Number,
+    default: 0
+  },
+  isDonor: {
+    type: Boolean,
+    default: true
+  },
+  pendingDonations: {
     type: Number,
     default: 0
   }

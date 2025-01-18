@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Loading } from "@/components/ui/loading"
 import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 
 interface User {
   _id: string
@@ -99,46 +100,50 @@ export default function DonorsPage() {
         {/* Filters */}
         <div className="sticky top-20 z-10 bg-background border-y border-border py-4 mb-6">
           <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Şehir ara..."
-                className="pl-9 focus-visible:ring-0 focus-visible:ring-offset-0"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <select
-                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  value={bloodType}
-                  onChange={(e) => setBloodType(e.target.value)}
-                >
-                  <option value="all">Tüm Kan Grupları</option>
-                  <option value="A+">A RH+</option>
-                  <option value="A-">A RH-</option>
-                  <option value="B+">B RH+</option>
-                  <option value="B-">B RH-</option>
-                  <option value="AB+">AB RH+</option>
-                  <option value="AB-">AB RH-</option>
-                  <option value="0+">0 RH+</option>
-                  <option value="0-">0 RH-</option>
-                </select>
-              </div>
-              <div className="relative">
-                <select
-                  className="h-10 w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                >
-                  <option value="">Tüm Şehirler</option>
-                  {uniqueCities.map((cityName) => (
-                    <option key={cityName} value={cityName!.toLowerCase()}>
-                      {cityName}
-                    </option>
-                  ))}
-                </select>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="relative flex-1 sm:flex-initial">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Bağışçı ara..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus-visible:outline-none"
+                  />
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:flex-initial min-w-[150px]">
+                    <select
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="all">Tüm şehirler</option>
+                      {uniqueCities.map((cityName) => (
+                        <option key={cityName} value={cityName || "all"}>
+                          {cityName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="relative flex-1 sm:flex-initial min-w-[150px]">
+                    <select
+                      value={bloodType}
+                      onChange={(e) => setBloodType(e.target.value)}
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="all">Tüm kan grupları</option>
+                      <option value="A+">A RH+</option>
+                      <option value="A-">A RH-</option>
+                      <option value="B+">B RH+</option>
+                      <option value="B-">B RH-</option>
+                      <option value="AB+">AB RH+</option>
+                      <option value="AB-">AB RH-</option>
+                      <option value="0+">0 RH+</option>
+                      <option value="0-">0 RH-</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

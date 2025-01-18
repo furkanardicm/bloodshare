@@ -514,9 +514,9 @@ function MessagesContent() {
 
   return (
     <div className="container py-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
         {/* Konuşma Listesi */}
-        <Card className="md:col-span-1 border dark:border-gray-800">
+        <Card className={`md:col-span-1 border dark:border-gray-800 ${selectedUserId ? 'hidden md:block' : 'block'}`}>
           <CardHeader>
             <CardTitle>Mesajlar</CardTitle>
             <div className="relative mt-2">
@@ -529,7 +529,7 @@ function MessagesContent() {
               />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-[calc(100vh-280px)] overflow-y-auto">
             <div className="space-y-2">
               {filteredConversations.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
@@ -580,10 +580,10 @@ function MessagesContent() {
         </Card>
 
         {/* Mesajlar */}
-        <Card className="md:col-span-2 border dark:border-gray-800">
+        <Card className={`md:col-span-2 border dark:border-gray-800 ${selectedUserId ? 'block' : 'hidden md:block'} h-full flex flex-col`}>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>
-              {selectedUserId && (
+              {selectedUserId ? (
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -595,18 +595,20 @@ function MessagesContent() {
                   </Button>
                   {conversations.find(c => c.userId === selectedUserId)?.name}
                 </div>
+              ) : (
+                <span className="hidden md:block">Mesajlar</span>
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col">
+            <div className="space-y-4 flex-1">
               {!selectedUserId && !userId ? (
                 <p className="text-muted-foreground text-center py-4">
                   Mesajlaşmak istediğiniz kişiyi seçin.
                 </p>
               ) : (
                 <>
-                  <div className="space-y-4 h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent pr-4 pb-4">
+                  <div className="space-y-4 h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent pr-4">
                     {Object.entries(groupMessagesByDate(filteredMessages)).map(([date, dateMessages]) => (
                       <div key={date} className="space-y-4">
                         <div className="flex items-center gap-4 my-4">
@@ -759,7 +761,7 @@ function MessagesContent() {
                     <div ref={messagesEndRef} /> {/* Scroll için referans div */}
                   </div>
 
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 mt-4">
                     <Input
                       type="text"
                       placeholder="Mesajınızı yazın..."

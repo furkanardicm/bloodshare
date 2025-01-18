@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface BloodRequest {
   _id: string
@@ -52,6 +53,9 @@ export default function NeedsPage() {
   const [city, setCity] = useState<string>("")
   const { toast } = useToast()
   const { data: session } = useSession()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCity, setSelectedCity] = useState("")
+  const [selectedBloodType, setSelectedBloodType] = useState("")
 
   // Benzersiz şehirleri al ve alfabetik sırala
   const uniqueCities = Array.from(new Set(requests.map(request => request.city)))
@@ -208,7 +212,7 @@ export default function NeedsPage() {
             <div className="flex items-center gap-4 w-full md:w-auto">
               <div className="relative flex-1 md:flex-none">
                 <select
-                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   value={bloodType}
                   onChange={(e) => setBloodType(e.target.value)}
                 >
@@ -225,13 +229,13 @@ export default function NeedsPage() {
               </div>
               <div className="relative flex-1 md:flex-none">
                 <select
-                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:ring-0 focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  className="h-10 w-full md:w-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 >
-                  <option value="">Tüm Şehirler</option>
+                  <option value="all">Tüm Şehirler</option>
                   {uniqueCities.map((cityName) => (
-                    <option key={cityName} value={cityName}>
+                    <option key={cityName} value={cityName || "all"}>
                       {cityName}
                     </option>
                   ))}

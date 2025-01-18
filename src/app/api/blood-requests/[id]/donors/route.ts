@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/db';
-import BloodRequest from '@/models/BloodRequest';
-import User from '@/models/User';
+import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+
+export const dynamic = 'force-dynamic'
 
 interface Donor {
   userId: string;
@@ -26,9 +27,12 @@ export async function POST(
       );
     }
 
-    await dbConnect();
+    const { db } = await connectToDatabase();
 
-    const bloodRequest = await BloodRequest.findById(params.id);
+    const bloodRequest = await db.collection('bloodRequests').findOne({
+      _id: new ObjectId(params.id)
+    });
+
     if (!bloodRequest) {
       return NextResponse.json(
         { error: 'Bağış isteği bulunamadı' },
@@ -37,7 +41,7 @@ export async function POST(
     }
 
     // Kullanıcı zaten bağışçı olarak eklenmiş mi kontrol et
-    const existingDonor = bloodRequest.donors.find(
+    const existingDonor = bloodRequest.donors?.find(
       (d: Donor) => d.userId === session.user.id
     );
 
@@ -49,7 +53,7 @@ export async function POST(
     }
 
     // İhtiyaç duyulan ünite sayısı kadar bağışçı var mı kontrol et
-    if (bloodRequest.donors.length >= bloodRequest.units) {
+    if (bloodRequest.donors?.length >= bloodRequest.units) {
       return NextResponse.json(
         { error: 'Bu bağış isteği için yeterli sayıda bağışçı bulundu' },
         { status: 400 }
@@ -65,23 +69,37 @@ export async function POST(
       addedAt: new Date()
     };
 
-    bloodRequest.donors.push(newDonor);
+    const donors = bloodRequest.donors || [];
+    donors.push(newDonor);
 
     // Yeterli bağışçı sayısına ulaşıldıysa durumu güncelle
-    if (bloodRequest.donors.length >= bloodRequest.units) {
-      bloodRequest.status = 'in_progress';
-    }
+    const status = donors.length >= bloodRequest.units ? 'in_progress' : 'active';
 
-    await bloodRequest.save();
-
-    // Kullanıcının istatistiklerini güncelle
-    await User.findByIdAndUpdate(
-      session.user.id,
-      { $inc: { pendingDonations: 1 } },
-      { new: true }
+    const updatedRequest = await db.collection('bloodRequests').findOneAndUpdate(
+      { _id: new ObjectId(params.id) },
+      { 
+        $set: { 
+          donors,
+          status
+        }
+      },
+      { returnDocument: 'after' }
     );
 
-    return NextResponse.json(bloodRequest);
+    if (!updatedRequest?.value) {
+      return NextResponse.json(
+        { error: 'Bağış isteği güncellenirken bir hata oluştu' },
+        { status: 500 }
+      );
+    }
+
+    // Kullanıcının istatistiklerini güncelle
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(session.user.id) },
+      { $inc: { pendingDonations: 1 } }
+    );
+
+    return NextResponse.json(updatedRequest?.value);
   } catch (error) {
     console.error('Bağışçı eklenirken hata:', error);
     return NextResponse.json(
@@ -96,11 +114,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await dbConnect();
+    const { db } = await connectToDatabase();
 
-    const bloodRequest = await BloodRequest.findById(params.id)
-      .select('donors')
-      .lean() as { donors?: Donor[] };
+    const bloodRequest = await db.collection('bloodRequests').findOne(
+      { _id: new ObjectId(params.id) },
+      { projection: { donors: 1 } }
+    );
 
     if (!bloodRequest) {
       return NextResponse.json(

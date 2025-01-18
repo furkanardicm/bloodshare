@@ -6,9 +6,13 @@ const donorSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
+  email: {
+    type: String,
+    required: true,
+  },
   status: {
     type: String,
-    enum: ["pending", "completed"],
+    enum: ["pending", "completed", "cancelled"],
     default: "pending",
   },
   createdAt: {
@@ -27,7 +31,10 @@ const bloodRequestSchema = new mongoose.Schema(
     bloodType: {
       type: String,
       required: true,
-      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "0+", "0-"],
+    },
+    units: {
+      type: Number,
+      required: true,
     },
     hospital: {
       type: String,
@@ -37,31 +44,28 @@ const bloodRequestSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    units: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
+    description: String,
     contact: {
       type: String,
       required: true,
     },
+    isUrgent: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
-      enum: ["active", "completed"],
-      default: "active",
+      enum: ["pending", "completed", "cancelled"],
+      default: "pending",
     },
     donors: [donorSchema],
-    totalDonors: {
-      type: Number,
-      default: 0,
-    },
-    completedAt: {
+    createdAt: {
       type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
@@ -69,12 +73,10 @@ const bloodRequestSchema = new mongoose.Schema(
   }
 )
 
-// Toplam bağışçı sayısını güncelle
+// Güncelleme zamanını otomatik güncelle
 bloodRequestSchema.pre("save", function (next) {
-  if (this.isModified("donors")) {
-    this.totalDonors = this.donors.length
-  }
-  next()
+  this.updatedAt = new Date();
+  next();
 })
 
 export default mongoose.models.BloodRequest || mongoose.model("BloodRequest", bloodRequestSchema) 

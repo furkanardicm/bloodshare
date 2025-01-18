@@ -1,147 +1,155 @@
 'use client';
 
-import { Breadcrumb } from "@/components/ui/breadcrumb"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
-import { Loading } from "@/components/ui/loading"
-import { CheckCircle, Clock, UserCheck } from "lucide-react"
-import { useEffect, useState } from "react"
-import { format } from "date-fns"
-import { tr } from "date-fns/locale"
-import type { BloodRequest } from "@/types/user"
+import { useState, useEffect } from 'react';
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CheckCircle, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
+import type { BloodRequest } from "@/types/user";
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+import { cn } from "@/lib/utils";
 
 export default function DonationsPage() {
-  const [donations, setDonations] = useState<BloodRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const { toast } = useToast()
+  const [donations, setDonations] = useState<BloodRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      redirect('/giris');
+    }
+  }, [status]);
 
   useEffect(() => {
     async function fetchDonations() {
       try {
-        const response = await fetch('/api/blood-requests/my-donations')
-        if (!response.ok) throw new Error('Bağışlar yüklenirken bir hata oluştu')
-        const data = await response.json()
-        setDonations(data)
+        const response = await fetch('/api/blood-requests/my-donations', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Bağışlar yüklenirken bir hata oluştu');
+        }
+
+        const data = await response.json();
+        setDonations(data);
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Hata!",
           description: error instanceof Error ? error.message : 'Bir hata oluştu'
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchDonations()
-  }, [toast])
+    if (session?.user) {
+      fetchDonations();
+    }
+  }, [session, toast]);
 
   const handleCompleteDonation = async (requestId: string) => {
     try {
       const response = await fetch(`/api/blood-requests/${requestId}/complete-donation`, {
-        method: 'POST'
-      })
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (!response.ok) throw new Error('Bağış tamamlanırken bir hata oluştu')
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Bağış tamamlanırken bir hata oluştu');
+      }
       
-      const updatedRequest = await response.json()
+      const updatedRequest = await response.json();
       setDonations(prev => prev.map(donation => 
         donation._id === requestId ? updatedRequest : donation
-      ))
+      ));
 
       toast({
         title: "Başarılı!",
         description: "Bağışınız tamamlandı olarak işaretlendi.",
-      })
+      });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Hata!",
         description: error instanceof Error ? error.message : 'Bir hata oluştu'
-      })
+      });
     }
-  }
+  };
 
   if (loading) {
-    return <Loading />
+    return <LoadingSpinner centered size="lg" />;
   }
 
   return (
-    <div>
-      <Breadcrumb
-        items={[
-          { title: "Profil", href: "/profil" },
-          { title: "Bağışlarım" }
-        ]}
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Bağışlarım</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {donations.length === 0 ? (
-            <p className="text-muted-foreground">Henüz bir bağışınız bulunmuyor.</p>
-          ) : (
-            <div className="space-y-4">
-              {donations.map((donation) => (
-                <div
-                  key={donation._id}
-                  className="p-4 border border-border rounded-lg bg-card"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {donation.hospital} - {donation.city}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(donation.createdAt), "d MMMM yyyy", {
-                          locale: tr,
-                        })}
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold tracking-tight">Bağışlarım</h1>
+      
+      <div className="space-y-4">
+        {donations.length === 0 ? (
+          <Card className="p-6">
+            <p className="text-muted-foreground text-center">
+              Henüz bir bağışta bulunmamışsınız.
+            </p>
+          </Card>
+        ) : (
+          donations.map((donation) => (
+            <Card key={donation._id} className="p-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-medium">{donation.hospital} - {donation.city}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(donation.createdAt), 'd MMMM yyyy', { locale: tr })}
+                  </p>
+                  <p className="text-sm text-red-500 font-medium mt-1">
+                    {donation.isUrgent && 'ACİL KAN İHTİYACI!'}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className="px-2 py-1 rounded-md bg-background border border-border text-sm">
                       {donation.bloodType}
-                    </span>
-                  </div>
-
-                  <div className="text-sm text-muted-foreground mb-4">
-                    <p>{donation.description}</p>
-                    <p className="mt-2">İhtiyaç: {donation.units} ünite</p>
-                    <div className="flex items-center mt-1">
-                      <span>Durum:</span>
-                      {donation.status === "completed" ? (
-                        <div className="flex items-center ml-2 text-green-600 dark:text-green-400">
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          <span>Tamamlandı</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center ml-2 text-yellow-600 dark:text-yellow-400">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span>Bekliyor</span>
-                        </div>
-                      )}
+                    </div>
+                    <div className={cn(
+                      "px-2 py-1 rounded-md border text-sm",
+                      donation.status === "pending" && "text-yellow-500 border-yellow-500",
+                      donation.status === "completed" && "text-emerald-500 border-emerald-500",
+                      donation.status === "cancelled" && "text-red-500 border-red-500"
+                    )}>
+                      {donation.status === "pending" && "Bekliyor"}
+                      {donation.status === "completed" && "Tamamlandı"}
+                      {donation.status === "cancelled" && "İptal Edildi"}
                     </div>
                   </div>
-
-                  {donation.status !== "completed" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCompleteDonation(donation._id)}
-                      className="w-full"
-                    >
-                      <UserCheck className="w-4 h-4 mr-2" />
-                      Bağışı Tamamla
-                    </Button>
-                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                {donation.status === "pending" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCompleteDonation(donation._id)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Bağışı Tamamla
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))
+        )}
+      </div>
     </div>
-  )
+  );
 } 

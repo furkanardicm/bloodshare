@@ -3,13 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, UserPlus, CheckCircle } from "lucide-react"
+import { Search, UserPlus, CheckCircle, MessageSquare, User } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { useSession } from "next-auth/react"
+import Link from "next/link"
 
 interface BloodRequest {
   _id: string
@@ -298,18 +299,48 @@ export default function NeedsPage() {
                               </Button>
                             )
                           ) : (
-                            request.status !== 'completed' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full"
-                                onClick={() => handleDonorSignup(request._id)}
-                                disabled={isUserDonor(request)}
-                              >
-                                <UserPlus className="w-4 h-4 mr-2" />
-                                {isUserDonor(request) ? 'Bağışçı Olundu' : 'Bağışçı Ol'}
-                              </Button>
-                            )
+                            <>
+                              {request.status !== 'completed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => handleDonorSignup(request._id)}
+                                  disabled={isUserDonor(request)}
+                                >
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  {isUserDonor(request) ? 'Bağışçı Olundu' : 'Bağışçı Ol'}
+                                </Button>
+                              )}
+                              <div className="flex gap-2">
+                                <Link 
+                                  href={`/profil/mesajlar?userId=${request.userId}`}
+                                  className="flex-1"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full flex items-center justify-center gap-2"
+                                  >
+                                    <MessageSquare className="w-4 h-4" />
+                                    <span>Mesaj Gönder</span>
+                                  </Button>
+                                </Link>
+                                <Link 
+                                  href={`/profil/${request.userId}`}
+                                  className="flex-1"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full flex items-center justify-center gap-2"
+                                  >
+                                    <User className="w-4 h-4" />
+                                    <span>Profili Gör</span>
+                                  </Button>
+                                </Link>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>

@@ -114,7 +114,7 @@ export default function MyRequestsPage() {
         </Link>
       </div>
 
-      <div className="space-y-4 bg-[rgb(22,22,22)] rounded-lg p-4">
+      <div className="space-y-4 bg-background rounded-lg p-4">
         <h2 className="text-lg font-medium">Bağış İsteklerim</h2>
         {loading ? (
           <LoadingSpinner centered size="lg" />
@@ -123,7 +123,7 @@ export default function MyRequestsPage() {
         ) : (
           <div className="space-y-4">
             {requests.map((request) => (
-              <div key={request._id} className="bg-[rgb(28,28,28)] rounded-lg p-4 space-y-4">
+              <div key={request._id} className="bg-card rounded-lg p-4 space-y-4 border border-border">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-medium">{request.hospital} - {request.city}</h3>
@@ -138,11 +138,11 @@ export default function MyRequestsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="px-2 py-1 rounded-md bg-transparent border border-border text-sm">
+                    <div className="px-2 py-1 rounded-md bg-background border border-border text-sm">
                       {request.bloodType}
                     </div>
                     <div className={cn(
-                      "px-2 py-1 rounded-md bg-transparent border text-sm",
+                      "px-2 py-1 rounded-md border text-sm",
                       request.status === "pending" && "text-yellow-500 border-yellow-500",
                       request.status === "completed" && "text-emerald-500 border-emerald-500",
                       request.status === "cancelled" && "text-red-500 border-red-500"
@@ -154,12 +154,12 @@ export default function MyRequestsPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-[rgb(32,32,32)] pt-4">
+                <div className="border-t border-border pt-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Bağışçılar</span>
-                      <div className="px-2 py-1 rounded-md bg-transparent border border-border text-sm ml-2">
+                      <div className="px-2 py-1 rounded-md bg-background border border-border text-sm ml-2">
                         {request.donors?.length || 0}/{request.units}
                       </div>
                     </div>

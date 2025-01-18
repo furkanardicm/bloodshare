@@ -7,6 +7,8 @@ import { Search, SlidersHorizontal } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { Loading } from "@/components/ui/loading"
+import Link from "next/link"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface User {
   _id: string
@@ -14,6 +16,27 @@ interface User {
   bloodType: string
   city?: string
   lastDonationDate: string | null
+  image: string
+}
+
+// Sabit renk listesi
+const AVATAR_COLORS = [
+  { bg: 'from-red-400 to-red-600', text: 'text-white' },
+  { bg: 'from-green-400 to-green-600', text: 'text-white' },
+  { bg: 'from-blue-400 to-blue-600', text: 'text-white' },
+  { bg: 'from-yellow-400 to-yellow-600', text: 'text-black' },
+  { bg: 'from-purple-400 to-purple-600', text: 'text-white' },
+  { bg: 'from-pink-400 to-pink-600', text: 'text-white' },
+  { bg: 'from-indigo-400 to-indigo-600', text: 'text-white' },
+  { bg: 'from-orange-400 to-orange-600', text: 'text-white' },
+  { bg: 'from-teal-400 to-teal-600', text: 'text-white' },
+  { bg: 'from-cyan-400 to-cyan-600', text: 'text-white' },
+];
+
+// Kullanıcı ID'sine göre sabit renk seçen fonksiyon
+function getAvatarColor(userId: string): { bg: string; text: string } {
+  const sum = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[sum % AVATAR_COLORS.length];
 }
 
 export default function DonorsPage() {
@@ -134,29 +157,32 @@ export default function DonorsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredDonors.map((donor) => (
-                  <div
-                    key={donor._id}
-                    className="p-4 border border-border rounded-lg bg-card"
+                  <Link 
+                    key={donor._id} 
+                    href={`/profil/${donor._id}`}
+                    className="block hover:opacity-90 transition-opacity"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-foreground">
-                        {donor.name}
-                      </h3>
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-                        {donor.bloodType}
-                      </span>
-                    </div>
-                    {donor.city && (
-                      <p className="text-sm text-muted-foreground">
-                        {donor.city}
-                      </p>
-                    )}
-                    {donor.lastDonationDate && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Son bağış: {new Date(donor.lastDonationDate).toLocaleDateString('tr-TR')}
-                      </p>
-                    )}
-                  </div>
+                    <Card className="border dark:border-gray-800">
+                      <CardHeader>
+                        <div className="flex items-center space-x-4">
+                          <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-gray-800 shadow-inner">
+                            <AvatarImage src={donor.image} />
+                            <AvatarFallback 
+                              className={`text-lg bg-gradient-to-br ${getAvatarColor(donor._id).bg} ${getAvatarColor(donor._id).text} shadow-inner`}
+                            >
+                              {donor.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-lg">{donor.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {donor.bloodType} Kan Grubu
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             )}

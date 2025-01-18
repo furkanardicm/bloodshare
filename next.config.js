@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: false,
+  transpilePackages: ['@radix-ui/react-avatar', '@radix-ui/react-scroll-area'],
+  images: {
+    domains: ['lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
   },
 }
 

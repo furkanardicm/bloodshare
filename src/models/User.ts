@@ -1,89 +1,32 @@
-import mongoose from 'mongoose';
-import { Document } from 'mongoose';
+import { Schema, model, models } from 'mongoose';
 
-export interface IUser extends Document {
-  name: string;
-  email: string;
-  password: string;
-  phone: string;
-  bloodType: string;
-  isDonor: boolean;
-  lastDonationDate?: Date;
-  city?: string;
-  totalDonations?: number;
-  pendingDonations?: number;
-  completedDonations?: number;
-  helpedPeople?: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IUserWithoutPassword {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  bloodType: string;
-  isDonor: boolean;
-  lastDonationDate?: Date;
-  city?: string;
-  totalDonations?: number;
-  pendingDonations?: number;
-  completedDonations?: number;
-  helpedPeople?: number;
-}
-
-const userSchema = new mongoose.Schema<IUser>({
+const userSchema = new Schema({
   name: {
     type: String,
-    required: [true, 'İsim alanı zorunludur'],
+    required: true
   },
   email: {
     type: String,
-    required: [true, 'E-posta alanı zorunludur'],
-    unique: true,
+    required: true,
+    unique: true
   },
   password: {
     type: String,
-    required: [true, 'Şifre alanı zorunludur'],
+    required: true,
+    select: false // Varsayılan olarak şifreyi getirme
   },
-  phone: {
-    type: String,
-    required: [true, 'Telefon alanı zorunludur'],
-  },
-  bloodType: {
-    type: String,
-    required: [true, 'Kan grubu alanı zorunludur'],
-    enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'],
-  },
-  isDonor: {
-    type: Boolean,
-    default: false,
-  },
-  lastDonationDate: {
-    type: Date,
-  },
-  city: {
-    type: String,
-  },
-  totalDonations: {
+  image: String,
+  bloodType: String,
+  city: String,
+  lastDonationDate: Date,
+  donationCount: {
     type: Number,
-    default: 0,
-  },
-  pendingDonations: {
-    type: Number,
-    default: 0,
-  },
-  completedDonations: {
-    type: Number,
-    default: 0,
-  },
-  helpedPeople: {
-    type: Number,
-    default: 0,
-  },
+    default: 0
+  }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema); 
+const User = models.users || model('users', userSchema);
+
+export default User; 

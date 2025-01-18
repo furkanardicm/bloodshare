@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import dbConnect from '@/lib/db'
 import BloodRequest from '@/models/BloodRequest'
-import { User } from '@/models/User'
+import User from '@/models/User'
 import { authOptions } from '@/lib/auth'
 
 export async function POST(

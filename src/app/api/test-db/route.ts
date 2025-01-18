@@ -1,21 +1,24 @@
 'use server';
 
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from "@/lib/mongodb";
-import { User } from '@/models/User';
+import dbConnect from '@/lib/db';
+import User from '@/models/User';
 
 export async function GET() {
   try {
-    await connectToDatabase();
+    // MongoDB'ye bağlan
+    await dbConnect();
 
-    const users = await User.find().lean();
+    // Test kullanıcısını oluştur
+    const user = await User.create({
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'hashedpassword',
+    });
 
-    return NextResponse.json(users);
+    return NextResponse.json({ success: true, user });
   } catch (error) {
-    console.error('Veritabanı bağlantısı test edilirken hata:', error);
-    return NextResponse.json(
-      { error: 'Veritabanı bağlantısı test edilirken bir hata oluştu' },
-      { status: 500 }
-    );
+    console.error('Database test error:', error);
+    return NextResponse.json({ success: false, error: 'Database connection failed' });
   }
 } 

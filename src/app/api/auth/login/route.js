@@ -1,44 +1,42 @@
-import { connect } from '@/lib/mongodb';
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/db';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import { NextResponse } from 'next/server';
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email ve şifre gerekli' },
+        { error: 'E-posta ve şifre zorunludur' },
         { status: 400 }
       );
     }
 
-    await connect();
+    await dbConnect();
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı' },
+        { error: 'Kullanıcı bulunamadı' },
         { status: 404 }
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    if (!isValid) {
+    if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Girdiğiniz şifre hatalı' },
+        { error: 'Geçersiz şifre' },
         { status: 401 }
       );
     }
 
-    return NextResponse.json({
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-    });
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
+    return NextResponse.json(userWithoutPassword);
   } catch (error) {
     console.error('Giriş hatası:', error);
     return NextResponse.json(

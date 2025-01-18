@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,7 +91,7 @@ function groupMessagesByDate(messages: Message[]) {
   return groups;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -842,5 +842,13 @@ export default function MessagesPage() {
         </Dialog>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner centered size="lg" />}>
+      <MessagesContent />
+    </Suspense>
   );
 } 

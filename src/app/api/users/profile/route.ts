@@ -1,51 +1,47 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectToDatabase } from '@/lib/mongodb';
-import { User } from '@/models/User';
+import dbConnect from '@/lib/db';
+import User from '@/models/User';
 
 export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Oturum açmanız gerekiyor' }, { status: 401 });
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const data = await request.json();
-    const { name, email, phone, bloodType, isDonor } = data;
+    // MongoDB'ye bağlan
+    await dbConnect();
 
-    const { db } = await connectToDatabase();
+    const { name, bloodType, city, lastDonationDate } = await request.json();
 
-    const user = await User.findById(session.user.id);
-    if (!user) {
-      return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 404 });
+    // Kullanıcıyı güncelle
+    const updatedUser = await User.findByIdAndUpdate(
+      session.user.id,
+      {
+        $set: {
+          name,
+          bloodType,
+          city,
+          lastDonationDate: lastDonationDate ? new Date(lastDonationDate) : undefined
+        }
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return NextResponse.json(
+        { error: 'Kullanıcı bulunamadı' },
+        { status: 404 }
+      );
     }
 
-    // E-posta değiştirilmek isteniyorsa, başka bir kullanıcı tarafından kullanılıp kullanılmadığını kontrol et
-    if (email !== user.email) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return NextResponse.json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor' }, { status: 400 });
-      }
-    }
-
-    // Kullanıcı bilgilerini güncelle
-    user.name = name;
-    user.email = email;
-    user.phone = phone;
-    user.bloodType = bloodType;
-    user.isDonor = isDonor;
-
-    await user.save();
-
-    // Hassas bilgileri çıkar
-    const { password, ...userWithoutPassword } = user.toObject();
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error('Profil güncellenirken hata:', error);
+    console.error('Profil güncelleme hatası:', error);
     return NextResponse.json(
-      { error: 'Profil güncellenirken hata oluştu' },
+      { error: 'Profil güncellenirken bir hata oluştu' },
       { status: 500 }
     );
   }
@@ -54,25 +50,26 @@ export async function PUT(request: Request) {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Oturum açmanız gerekiyor' }, { status: 401 });
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { db } = await connectToDatabase();
+    await dbConnect();
 
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(session.user.id).select('-password');
+
     if (!user) {
-      return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Kullanıcı bulunamadı' },
+        { status: 404 }
+      );
     }
 
-    // Hassas bilgileri çıkar
-    const { password, ...userWithoutPassword } = user.toObject();
-
-    return NextResponse.json(userWithoutPassword);
+    return NextResponse.json(user);
   } catch (error) {
-    console.error('Profil bilgileri getirilirken hata:', error);
+    console.error('Profil getirme hatası:', error);
     return NextResponse.json(
-      { error: 'Profil bilgileri getirilirken hata oluştu' },
+      { error: 'Profil bilgileri alınırken bir hata oluştu' },
       { status: 500 }
     );
   }

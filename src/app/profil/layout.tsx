@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { User, Heart, History, Settings, Menu, ChevronRight, ListTodo, MessageSquare, LogOut } from 'lucide-react';
+import { User, Heart, History, Settings, Menu, ChevronRight, ListTodo, MessageSquare, LogOut, Gift } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation'
@@ -57,10 +57,16 @@ export default function ProfileLayout({
       active: isActive('/profil/isteklerim')
     },
     {
+      title: 'Bağışlarım',
+      href: '/profil/bagislarim',
+      icon: Gift,
+      active: isActive('/profil/bagislarim')
+    },
+    {
       title: 'Geçmişim',
-      href: '/profil/gecmisim',
+      href: '/profil/gecmis',
       icon: History,
-      active: isActive('/profil/gecmisim')
+      active: isActive('/profil/gecmis')
     },
     {
       title: 'Mesajlar',

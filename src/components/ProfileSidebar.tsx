@@ -2,23 +2,33 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Heart, History, Settings } from 'lucide-react';
+import { User, Heart, History, MessageSquare, Settings, Gift } from 'lucide-react';
 
 const menuItems = [
   {
-    title: 'Profil',
+    title: 'Profilim',
     href: '/profil',
     icon: User
   },
   {
-    title: 'Kan Bağışı İsteklerim',
+    title: 'İsteklerim',
     href: '/profil/isteklerim',
     icon: Heart
   },
   {
-    title: 'Bağış Geçmişim',
+    title: 'Bağışlarım',
     href: '/profil/bagislarim',
+    icon: Gift
+  },
+  {
+    title: 'Geçmişim',
+    href: '/profil/gecmis',
     icon: History
+  },
+  {
+    title: 'Mesajlar',
+    href: '/profil/mesajlar',
+    icon: MessageSquare
   },
   {
     title: 'Ayarlar',

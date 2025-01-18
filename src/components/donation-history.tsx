@@ -3,19 +3,22 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loading } from "@/components/ui/loading";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { BloodRequest } from "@/types/user";
 
 export function DonationHistory() {
   const [history, setHistory] = useState<BloodRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchHistory() {
       try {
+        setError(null);
         const [donationsRes, requestsRes] = await Promise.all([
           fetch('/api/blood-requests/my-donations?status=completed'),
           fetch('/api/blood-requests/my-requests?status=completed')
@@ -29,6 +32,9 @@ export function DonationHistory() {
           requestsRes.json()
         ]);
 
+        console.log('Bağışlar:', donations);
+        console.log('İstekler:', requests);
+
         // Tüm kayıtları birleştir ve tarihe göre sırala
         const allHistory = [...donations, ...requests]
           .filter(item => item.status === 'completed')
@@ -37,9 +43,12 @@ export function DonationHistory() {
             new Date(a.completedAt || a.createdAt).getTime()
           );
 
+        console.log('Birleştirilmiş geçmiş:', allHistory);
         setHistory(allHistory);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Bir hata oluştu');
+        const message = error instanceof Error ? error.message : 'Bir hata oluştu';
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -52,6 +61,15 @@ export function DonationHistory() {
     return <Loading />;
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -59,7 +77,15 @@ export function DonationHistory() {
       </CardHeader>
       <CardContent>
         {history.length === 0 ? (
-          <p className="text-muted-foreground">Henüz tamamlanmış bir bağış kaydınız bulunmuyor.</p>
+          <div className="text-center py-8">
+            <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-lg font-medium text-muted-foreground mb-2">
+              Henüz tamamlanmış bir bağış kaydınız bulunmuyor
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Tamamlanan bağışlarınız ve istekleriniz burada görüntülenecektir.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             {history.map((item) => (

@@ -24,23 +24,16 @@ export interface IUserWithoutPassword {
 
 export interface BloodRequest {
   _id: string;
-  userId: string;
-  requesterName: string;
-  bloodType: string;
   hospital: string;
   city: string;
-  units: number;
-  description: string;
-  contact: string;
+  bloodType: string;
+  isUrgent: boolean;
   createdAt: string;
-  updatedAt: string;
+  description: string;
   completedAt?: string;
-  isUrgent?: boolean;
-  status: "pending" | "completed" | "cancelled";
-  donors?: Array<{
-    email: string;
-    name: string;
+  userId: string | { _id: string };
+  donors: Array<{
     userId: string;
-    status: "pending" | "completed" | "cancelled";
+    status: string;
   }>;
 } 

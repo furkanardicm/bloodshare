@@ -38,6 +38,7 @@ export default function ProfilePage() {
           throw new Error('Kullanıcı bilgileri alınamadı');
         }
         const userData = await userResponse.json();
+        console.log('Kullanıcı verileri:', userData);
 
         // İstek istatistiklerini al
         const requestsResponse = await fetch('/api/blood-requests/my-requests');
@@ -45,18 +46,27 @@ export default function ProfilePage() {
           throw new Error('İstek istatistikleri alınamadı');
         }
         const requests = await requestsResponse.json();
+        console.log('İstek verileri:', requests);
 
-        setStats({
+        // İstatistikleri hesapla
+        const activeRequests = requests.filter((r: any) => r.status === 'active' || r.status === 'pending' || r.status === 'in_progress');
+        const completedRequests = requests.filter((r: any) => r.status === 'completed');
+
+        const newStats = {
           totalRequests: requests.length,
-          activeRequests: requests.filter((r: any) => r.status === 'active').length,
-          completedRequests: requests.filter((r: any) => r.status === 'completed').length,
+          activeRequests: activeRequests.length,
+          completedRequests: completedRequests.length,
           totalDonations: userData.totalDonations || 0,
           pendingDonations: userData.pendingDonations || 0,
           completedDonations: userData.completedDonations || 0
-        });
+        };
+        console.log('Hesaplanan istatistikler:', newStats);
+        
+        setStats(newStats);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Bir hata oluştu';
         setError(message);
+        console.error('İstatistik hatası:', error);
         toast({
           variant: "destructive",
           title: "Hata!",
@@ -127,17 +137,23 @@ export default function ProfilePage() {
             <Heart className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalDonations}</div>
-            <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-                <span>Tamamlanan: {stats.completedDonations}</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-                <span>Bekleyen: {stats.pendingDonations}</span>
-              </div>
-            </div>
+            {stats.pendingDonations === 0 && stats.completedDonations === 0 ? (
+              <p className="text-sm text-muted-foreground">Henüz bağış yapmadınız</p>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.pendingDonations + stats.completedDonations}</div>
+                <div className="flex flex-col space-y-1 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+                    <span>Tamamlanan: {stats.completedDonations}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="mr-1 h-3 w-3 text-yellow-500" />
+                    <span>Bekleyen: {stats.pendingDonations}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -149,18 +165,24 @@ export default function ProfilePage() {
             <ListTodo className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRequests}</div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <Clock className="mr-1 h-3 w-3 text-yellow-500" />
-                <span>Aktif: {stats.activeRequests}</span>
-              </div>
-              <div>•</div>
-              <div className="flex items-center">
-                <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
-                <span>Tamamlanan: {stats.completedRequests}</span>
-              </div>
-            </div>
+            {stats.totalRequests === 0 ? (
+              <p className="text-sm text-muted-foreground">Henüz kan isteği oluşturmadınız</p>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats.totalRequests}</div>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <Clock className="mr-1 h-3 w-3 text-yellow-500" />
+                    <span>Aktif: {stats.activeRequests}</span>
+                  </div>
+                  <div>•</div>
+                  <div className="flex items-center">
+                    <CheckCircle className="mr-1 h-3 w-3 text-green-500" />
+                    <span>Tamamlanan: {stats.completedRequests}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

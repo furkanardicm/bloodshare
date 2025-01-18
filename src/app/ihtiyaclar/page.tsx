@@ -69,28 +69,32 @@ export default function NeedsPage() {
   useEffect(() => {
     async function fetchRequests() {
       try {
-        const response = await fetch('/api/blood-requests/active')
+        setLoading(true);
+        const response = await fetch('/api/blood-requests/active', {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'İhtiyaçlar yüklenirken bir hata oluştu');
+          throw new Error('İhtiyaçlar yüklenirken bir hata oluştu');
         }
-        const data = await response.json()
-        console.log("Gelen veriler:", data);
-        setRequests(data)
+
+        const data = await response.json();
+        setRequests(data);
       } catch (error) {
-        console.error("Hata detayı:", error);
         toast({
           variant: "destructive",
           title: "Hata!",
           description: error instanceof Error ? error.message : 'Bir hata oluştu'
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchRequests()
-  }, [toast])
+    fetchRequests();
+  }, [toast]);
 
   const filteredRequests = requests.filter((request) => {
     const matchesSearch = 
@@ -100,10 +104,9 @@ export default function NeedsPage() {
       (request.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
     const matchesBloodType = bloodType === "all" || request.bloodType === bloodType;
-    const matchesCity = !city || request.city === city;
-    const isActive = request.status === 'active';
+    const matchesCity = !city || city === "all" || request.city === city;
 
-    return matchesSearch && matchesBloodType && matchesCity && isActive;
+    return matchesSearch && matchesBloodType && matchesCity;
   });
 
   const handleDonorSignup = async (requestId: string) => {
@@ -113,46 +116,38 @@ export default function NeedsPage() {
           variant: "destructive",
           title: "Hata!",
           description: "Bağışçı olmak için giriş yapmalısınız."
-        })
-        return
+        });
+        return;
       }
 
       const response = await fetch(`/api/blood-requests/${requestId}/donors`, {
         method: 'POST',
-      })
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
       
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error || 'Bağışçı kaydı yapılırken bir hata oluştu')
+        throw new Error(data.error || 'Bağışçı kaydı yapılırken bir hata oluştu');
       }
       
-      // İlanı güncelle
-      const currentRequest = requests.find(req => req._id === requestId);
-      if (currentRequest) {
-        const updatedRequest = {
-          ...currentRequest,
-          donors: [...(currentRequest.donors || []), {
-            email: session.user.email,
-            status: 'pending'
-          }]
-        };
-        setRequests(prev => prev.map(req => 
-          req._id === requestId ? updatedRequest : req
-        ));
-      }
-
       toast({
         title: "Başarılı!",
         description: "Bağış talebiniz kaydedildi.",
-      })
+      });
+
+      // Sayfayı yenile
+      window.location.reload();
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Hata!",
         description: error instanceof Error ? error.message : 'Bir hata oluştu'
-      })
+      });
     }
-  }
+  };
 
   const handleCompleteRequest = async (requestId: string) => {
     try {

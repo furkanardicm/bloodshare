@@ -29,7 +29,7 @@ export async function POST(
 
     const { db } = await connectToDatabase();
 
-    const bloodRequest = await db.collection('bloodRequests').findOne({
+    const bloodRequest = await db.collection('BloodRequest').findOne({
       _id: new ObjectId(params.id)
     });
 
@@ -75,7 +75,7 @@ export async function POST(
     // Yeterli bağışçı sayısına ulaşıldıysa durumu güncelle
     const status = donors.length >= bloodRequest.units ? 'in_progress' : 'active';
 
-    const updatedRequest = await db.collection('bloodRequests').findOneAndUpdate(
+    const updatedRequest = await db.collection('BloodRequest').findOneAndUpdate(
       { _id: new ObjectId(params.id) },
       { 
         $set: { 
@@ -116,7 +116,7 @@ export async function GET(
   try {
     const { db } = await connectToDatabase();
 
-    const bloodRequest = await db.collection('bloodRequests').findOne(
+    const bloodRequest = await db.collection('BloodRequest').findOne(
       { _id: new ObjectId(params.id) },
       { projection: { donors: 1 } }
     );

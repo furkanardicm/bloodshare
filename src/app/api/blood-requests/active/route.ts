@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const { db } = await connectToDatabase();
 
-    const requests = await db.collection("bloodRequests")
+    const requests = await db.collection("BloodRequest")
       .find({ status: "active" })
       .sort({ createdAt: -1 })
       .toArray();

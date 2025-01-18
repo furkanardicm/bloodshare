@@ -17,7 +17,7 @@ export async function GET() {
 
     const { db } = await connectToDatabase();
 
-    const requests = await db.collection("bloodRequests")
+    const requests = await db.collection("BloodRequest")
       .find({ userId: session.user.id })
       .sort({ createdAt: -1 })
       .toArray();

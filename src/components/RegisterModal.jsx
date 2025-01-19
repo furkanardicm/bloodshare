@@ -202,7 +202,9 @@ export default function RegisterModal({ show, handleClose, setShowLoginModal }) 
                   name="isDonor"
                   defaultChecked={true}
                   disabled={loading}
-                  {...register("isDonor")}
+                  {...register("isDonor", {
+                    setValueAs: (value) => Boolean(value)
+                  })}
                 />
               </div>
             </div>

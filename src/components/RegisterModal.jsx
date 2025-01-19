@@ -36,10 +36,7 @@ export default function RegisterModal({ show, handleClose, setShowLoginModal }) 
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          isDonor: true
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {

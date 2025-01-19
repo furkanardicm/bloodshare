@@ -79,4 +79,4 @@ bloodRequestSchema.pre("save", function (next) {
   next();
 })
 
-export default mongoose.models.BloodRequest || mongoose.model("BloodRequest", bloodRequestSchema) 
+export default mongoose.models.bloodRequests || mongoose.model("bloodRequests", bloodRequestSchema) 

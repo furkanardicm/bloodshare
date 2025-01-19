@@ -95,6 +95,10 @@ export async function POST(request: Request) {
       .populate('sender', 'name image')
       .populate('receiver', 'name image');
 
+    if (!populatedMessage) {
+      return new NextResponse('Mesaj bulunamadı', { status: 404 });
+    }
+
     const formattedMessage = {
       _id: populatedMessage._id.toString(),
       content: populatedMessage.content,
@@ -111,11 +115,10 @@ export async function POST(request: Request) {
       readStatus: populatedMessage.readStatus,
       isEdited: populatedMessage.isEdited,
       createdAt: populatedMessage.createdAt,
-      deletedFor: populatedMessage.deletedFor
+      deletedFor: populatedMessage.deletedFor || []
     };
 
-    console.log('Formatlanmış mesaj:', formattedMessage);
-    return NextResponse.json(formattedMessage);
+    return NextResponse.json(formattedMessage, { status: 201 });
   } catch (error) {
     console.error('Mesaj gönderilirken hata:', error);
     return new NextResponse('Internal Server Error', { status: 500 });

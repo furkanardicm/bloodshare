@@ -55,7 +55,12 @@ export async function POST(
     const updatePath = `donors.${donorIndex}.status`;
     const updatedRequest = await db.collection('bloodRequests').findOneAndUpdate(
       { _id: new ObjectId(params.requestId) },
-      { $set: { [updatePath]: 'approved' } },
+      { 
+        $set: { 
+          [updatePath]: 'approved',
+          status: 'in_progress' // İstek durumunu in_progress olarak güncelle
+        } 
+      },
       { returnDocument: 'after' }
     );
 
@@ -102,6 +107,34 @@ export async function POST(
       );
 
       console.log('Güncelleme sonrası kullanıcı:', updateResult);
+    }
+
+    // Onaylanmış bağışçı sayısını kontrol et
+    const approvedDonors = updatedRequest.donors.filter((d: any) => d.status === 'approved').length;
+    
+    // Eğer onaylanmış bağışçı sayısı ihtiyaç duyulan ünite sayısına eşitse
+    if (approvedDonors === bloodRequest.units) {
+      // İsteği tamamlandı olarak işaretle
+      await db.collection('bloodRequests').updateOne(
+        { _id: new ObjectId(params.requestId) },
+        { 
+          $set: { 
+            status: 'completed',
+            completedAt: new Date()
+          } 
+        }
+      );
+
+      // İstek sahibinin tamamlanan istekler sayısını arttır
+      await db.collection('users').updateOne(
+        { _id: new ObjectId(bloodRequest.userId) },
+        { 
+          $inc: { 
+            completedRequests: 1,
+            totalRequests: 1
+          } 
+        }
+      );
     }
 
     // Bağışçı bilgilerini getir

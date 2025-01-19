@@ -95,47 +95,27 @@ export async function POST(
     };
     console.log('Eklenecek yeni bağışçı:', newDonor);
 
-    // Yeterli bağışçı sayısına ulaşıldıysa durumu güncelle
-    const status = currentDonorCount + 1 >= bloodRequest.units ? 'in_progress' : 'active';
-    console.log('Yeni durum:', status);
-
-    const updatedRequest = await db.collection<BloodRequest>('bloodRequests').findOneAndUpdate(
-      { _id: new ObjectId(params.requestId) },
-      { 
-        $push: { donors: newDonor },
-        $set: { status }
-      },
-      { returnDocument: 'after' }
-    ) as WithId<BloodRequest> | null;
-    console.log('Güncellenen istek:', updatedRequest);
+    // Bağışçıyı ekle ve kullanıcının pending donations sayısını arttır
+    const [updatedRequest] = await Promise.all([
+      db.collection<BloodRequest>('bloodRequests').findOneAndUpdate(
+        { _id: new ObjectId(params.requestId) },
+        { 
+          $push: { donors: newDonor }
+        },
+        { returnDocument: 'after' }
+      ),
+      db.collection('users').updateOne(
+        { _id: user._id },
+        { $inc: { pendingDonations: 1 } }
+      )
+    ]);
 
     if (!updatedRequest) {
       return NextResponse.json(
-        { error: 'Bağış isteği güncellenirken bir hata oluştu' },
+        { error: 'Bağışçı eklenirken bir hata oluştu' },
         { status: 500 }
       );
     }
-
-    // Kullanıcının mevcut pendingDonations değerini al
-    const currentUser = await db.collection('users').findOne(
-      { _id: user._id },
-      { projection: { pendingDonations: 1 } }
-    );
-    console.log('Mevcut kullanıcı durumu:', currentUser);
-
-    const currentPendingDonations = currentUser?.pendingDonations || 0;
-
-    // Kullanıcının istatistiklerini güncelle
-    const userUpdate = await db.collection('users').updateOne(
-      { _id: user._id },
-      { 
-        $set: { 
-          pendingDonations: currentPendingDonations + 1,
-          isDonor: true 
-        }
-      }
-    );
-    console.log('Kullanıcı güncelleme sonucu:', userUpdate);
 
     return NextResponse.json(updatedRequest);
   } catch (error) {

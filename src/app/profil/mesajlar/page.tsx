@@ -108,7 +108,6 @@ function MessagesContent() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteForAll, setDeleteForAll] = useState(false);
   const userId = searchParams?.get('userId') || null;
-  const [polling, setPolling] = useState<NodeJS.Timeout | null>(null);
 
   // URL'den gelen userId'yi selectedUserId'ye ata
   useEffect(() => {
@@ -295,13 +294,83 @@ function MessagesContent() {
     });
   }, [session?.user?.id]);
 
-  // Polling'i kaldır
   useEffect(() => {
-    if (polling) {
-      clearInterval(polling);
-      setPolling(null);
-    }
-  }, [polling]);
+    if (!session?.user?.id) return;
+
+    const fetchAndUpdateMessages = async () => {
+      try {
+        const response = await fetch('/api/messages');
+        if (!response.ok) throw new Error('Mesajlar yüklenirken bir hata oluştu');
+        
+        const data = await response.json();
+        
+        // Seçili konuşmanın mesajlarını güncelle
+        if (selectedUserId) {
+          const conversationMessages = data.filter((message: Message) => 
+            (message.sender._id === selectedUserId && message.receiver._id === session.user.id) ||
+            (message.sender._id === session.user.id && message.receiver._id === selectedUserId)
+          );
+          
+          const hasNewMessage = conversationMessages.length > messages.length;
+          const lastMessage = hasNewMessage ? conversationMessages[conversationMessages.length - 1] : null;
+          const shouldScroll = hasNewMessage && lastMessage?.sender._id !== session.user.id;
+          
+            setMessages(conversationMessages);
+          if (shouldScroll) {
+              scrollToBottom();
+          }
+        }
+
+        // Konuşma listesini güncelle
+        const conversationsMap = new Map<string, Conversation>();
+        
+        data.forEach((message: Message) => {
+          const otherUser = message.sender._id === session.user.id ? message.receiver : message.sender;
+          const existingConversation = conversationsMap.get(otherUser._id);
+          
+          if (!existingConversation) {
+            conversationsMap.set(otherUser._id, {
+              userId: otherUser._id,
+              name: otherUser.name,
+              image: otherUser.image,
+              lastMessage: {
+                content: message.content,
+                createdAt: message.createdAt
+              },
+              unreadCount: message.sender._id !== session.user.id && 
+                message.readStatus === 'UNREAD' ? 1 : 0
+            });
+          } else {
+            const messageDate = new Date(message.createdAt);
+            const lastMessageDate = new Date(existingConversation.lastMessage?.createdAt || '');
+            
+            if (messageDate > lastMessageDate) {
+              existingConversation.lastMessage = {
+                content: message.content,
+                createdAt: message.createdAt
+              };
+            }
+            
+            if (message.sender._id !== session.user.id && message.readStatus === 'UNREAD') {
+              existingConversation.unreadCount++;
+            }
+          }
+        });
+        
+        setConversations(Array.from(conversationsMap.values()));
+      } catch (error) {
+        console.error('Mesajlar yüklenirken bir hata oluştu:', error);
+      }
+    };
+
+    // İlk yükleme
+    fetchAndUpdateMessages();
+
+    // Her 5 saniyede bir güncelle
+    const interval = setInterval(fetchAndUpdateMessages, 5000);
+
+    return () => clearInterval(interval);
+  }, [session?.user?.id, selectedUserId, messages.length]);
 
   const handleUserSelect = async (userId: string) => {
     setSelectedUserId(userId);
@@ -435,91 +504,11 @@ function MessagesContent() {
         return dateB.getTime() - dateA.getTime(); // En son mesaj en üstte
       })
       .filter(conversation => {
+        if (!conversation.name) return false;
         const searchTermLower = searchTerm.toLowerCase();
         return conversation.name.toLowerCase().includes(searchTermLower);
       });
   }, [conversations, searchTerm]);
-
-  // Polling mekanizması ekle
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    // Her 5 saniyede bir tüm mesajları ve konuşmaları yenile
-    const interval = setInterval(async () => {
-      try {
-        // Tüm mesajları getir
-        const response = await fetch('/api/messages', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Mesajlar yüklenirken bir hata oluştu');
-        }
-
-        const data = await response.json();
-        
-        // Seçili konuşmanın mesajlarını güncelle
-        if (selectedUserId) {
-          const conversationMessages = data.filter((message: Message) => 
-            (message.sender._id === selectedUserId && message.receiver._id === session.user.id) ||
-            (message.sender._id === session.user.id && message.receiver._id === selectedUserId)
-          );
-          
-          // Yeni mesaj varsa güncelle ve scroll yap
-          if (conversationMessages.length > messages.length) {
-            setMessages(conversationMessages);
-            scrollToBottom();
-          } else {
-            setMessages(conversationMessages);
-          }
-        }
-
-        // Konuşma listesini güncelle
-        const conversationsMap = new Map<string, Conversation>();
-        
-        data.forEach((message: Message) => {
-          const otherUser = message.sender._id === session.user.id ? message.receiver : message.sender;
-          const existingConversation = conversationsMap.get(otherUser._id);
-          
-          if (!existingConversation) {
-            conversationsMap.set(otherUser._id, {
-              userId: otherUser._id,
-              name: otherUser.name,
-              image: otherUser.image,
-              lastMessage: {
-                content: message.content,
-                createdAt: message.createdAt
-              },
-              unreadCount: message.sender._id !== session.user.id && 
-                message.readStatus === 'UNREAD' ? 1 : 0
-            });
-          } else {
-            const messageDate = new Date(message.createdAt);
-            const lastMessageDate = new Date(existingConversation.lastMessage?.createdAt || '');
-            
-            if (messageDate > lastMessageDate) {
-              existingConversation.lastMessage = {
-                content: message.content,
-                createdAt: message.createdAt
-              };
-            }
-            
-            if (message.sender._id !== session.user.id && message.readStatus === 'UNREAD') {
-              existingConversation.unreadCount++;
-            }
-          }
-        });
-
-        setConversations(Array.from(conversationsMap.values()));
-      } catch (error) {
-        console.error('Mesaj yenileme hatası:', error);
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [session?.user?.id, selectedUserId]);
 
   if (loading) {
     return <LoadingSpinner centered size="lg" />;

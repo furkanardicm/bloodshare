@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
 
-    const { name, email, password, phone, bloodType, city, isDonor = true } = await request.json();
+    const { name, email, password, phone, bloodType, city, isDonor } = await request.json();
 
     // Email kontrolü
     const existingUser = await User.findOne({ email });
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       phone,
       bloodType,
       city,
-      isDonor: Boolean(isDonor),
+      isDonor,
       role: 'USER',
       emailVerified: null,
       image: null,

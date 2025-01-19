@@ -128,7 +128,7 @@ export default function ProfileLayout({
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className={cn(
-            "absolute -right-7 top-12 p-1.5 rounded-r-md bg-card dark:bg-[rgb(22,22,22)] border border-l-0 border-border dark:border-[rgb(28,28,28)] transition-transform duration-300",
+            "absolute -right-7 top-12 p-1.5 rounded-r-md bg-background dark:bg-[rgb(22,22,22)] border border-l-0 border-border dark:border-[rgb(28,28,28)] transition-transform duration-300",
             !isSidebarOpen && "-right-9"
           )}
         >

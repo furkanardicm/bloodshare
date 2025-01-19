@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body className={`${poppins.className} antialiased`}>
+      <body className={`${poppins.className} antialiased dark:bg-[rgb(22,22,22)]`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -33,9 +33,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
-            <div className="min-h-screen bg-white dark:bg-black transition-colors duration-300">
+            <div className="min-h-screen bg-white dark:bg-[rgb(22,22,22)] transition-colors duration-300">
               <Header />
-              <main className="dark:bg-black">{children}</main>
+              <main className="dark:bg-[rgb(22,22,22)]">{children}</main>
               <Toaster />
               <SonnerToaster />
             </div>

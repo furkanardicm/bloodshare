@@ -527,10 +527,10 @@ function MessagesContent() {
 
   return (
     <div className="container py-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-120px)]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-120px)] max-h-[900px]">
         {/* Konuşma Listesi */}
-        <Card className={`md:col-span-1 border dark:border-gray-800 ${selectedUserId ? 'hidden md:block' : 'block'}`}>
-          <CardHeader>
+        <Card className={`md:col-span-1 border dark:border-gray-800 ${selectedUserId ? 'hidden md:block' : 'block'} h-full bg-card dark:bg-[rgb(22,22,22)]`}>
+          <CardHeader className="pb-4">
             <CardTitle>Mesajlar</CardTitle>
             <div className="relative mt-2">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -542,7 +542,7 @@ function MessagesContent() {
               />
             </div>
           </CardHeader>
-          <CardContent className="h-[calc(100vh-280px)] overflow-y-auto">
+          <CardContent className="h-[calc(100%-120px)] overflow-y-auto">
             <div className="space-y-2">
               {filteredConversations.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
@@ -553,7 +553,7 @@ function MessagesContent() {
                   <div
                     key={conversation.userId}
                     className={`p-3 rounded-lg cursor-pointer border dark:border-gray-800 hover:bg-accent/50 ${
-                      selectedUserId === conversation.userId ? 'bg-accent' : ''
+                      selectedUserId === conversation.userId ? 'bg-accent/50 dark:bg-accent/50' : ''
                     }`}
                     onClick={() => handleUserSelect(conversation.userId)}
                   >
@@ -593,8 +593,8 @@ function MessagesContent() {
         </Card>
 
         {/* Mesajlar */}
-        <Card className={`md:col-span-2 border dark:border-gray-800 ${selectedUserId ? 'block' : 'hidden md:block'} h-full flex flex-col`}>
-          <CardHeader className="flex flex-row items-center justify-between">
+        <Card className={`md:col-span-2 border dark:border-gray-800 ${selectedUserId ? 'block' : 'hidden md:block'} h-full flex flex-col bg-card dark:bg-[rgb(22,22,22)]`}>
+          <CardHeader className="flex flex-row items-center justify-between pb-4">
             <CardTitle>
               {selectedUserId ? (
                 <div className="flex items-center gap-2">
@@ -613,15 +613,15 @@ function MessagesContent() {
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col">
-            <div className="space-y-4 flex-1">
+          <CardContent className="flex-1 flex flex-col h-[calc(100%-80px)]">
+            <div className="flex-1 flex flex-col">
               {!selectedUserId && !userId ? (
                 <p className="text-muted-foreground text-center py-4">
                   Mesajlaşmak istediğiniz kişiyi seçin.
                 </p>
               ) : (
                 <>
-                  <div className="space-y-4 h-[calc(100vh-300px)] overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent pr-4">
+                  <div className="space-y-4 flex-1 h-[calc(100vh-300px)] md:h-[calc(100%-80px)] overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent pr-4 bg-card dark:bg-[rgb(22,22,22)]">
                     {Object.entries(groupMessagesByDate(filteredMessages)).map(([date, dateMessages]) => (
                       <div key={date} className="space-y-4">
                         <div className="flex items-center gap-4 my-4">
@@ -636,24 +636,24 @@ function MessagesContent() {
                               message.sender._id === session?.user?.id
                                 ? 'justify-end'
                                 : 'justify-start'
-                            }`}
+                            } px-2 md:px-4`}
                           >
                             {message.sender._id !== session?.user?.id && (
-                              <Avatar className="w-10 h-10 ring-2 ring-white dark:ring-gray-800 shadow-inner">
+                              <Avatar className="hidden md:flex w-8 h-8 md:w-10 md:h-10 ring-2 ring-white dark:ring-gray-800 shadow-inner">
                                 <AvatarImage src={message.sender.image} />
                                 <AvatarFallback 
-                                  className={`text-base bg-gradient-to-br ${getAvatarColor(message.sender._id).bg} ${getAvatarColor(message.sender._id).text} shadow-inner`}
+                                  className={`text-sm md:text-base bg-gradient-to-br ${getAvatarColor(message.sender._id).bg} ${getAvatarColor(message.sender._id).text} shadow-inner`}
                                 >
                                   {message.sender.name.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                             )}
                             <div
-                              className={`relative min-w-[240px] max-w-[80%] rounded-lg p-3 border dark:border-gray-800 group ${
+                              className={`group relative max-w-[85%] md:max-w-[65%] ${
                                 message.sender._id === session?.user?.id
-                                  ? 'bg-primary/90 text-primary-foreground dark:bg-primary/80 dark:text-primary-foreground/90 rounded-tr-none'
-                                  : 'bg-muted rounded-tl-none dark:bg-muted/50'
-                              }`}
+                                  ? 'bg-primary text-primary-foreground rounded-bl-2xl rounded-br-2xl rounded-tl-2xl rounded-tr-sm after:absolute after:right-[-10px] after:top-0 after:border-t-[12px] after:border-r-[12px] after:border-b-0 after:border-l-0 after:border-t-primary after:border-r-transparent'
+                                  : 'bg-muted dark:bg-[rgb(28,28,28)] rounded-bl-2xl rounded-br-2xl rounded-tr-2xl rounded-tl-sm after:absolute after:left-[-10px] after:top-0 after:border-t-[12px] after:border-l-[12px] after:border-b-0 after:border-r-0 after:border-t-muted dark:after:border-t-[rgb(28,28,28)] after:border-l-transparent'
+                              } px-3 py-2`}
                             >
                               {message.sender._id === session?.user?.id && (
                                 <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 [&[data-state=open]]:!opacity-100">
@@ -664,7 +664,7 @@ function MessagesContent() {
                                         size="sm" 
                                         className="h-auto w-auto p-0 bg-transparent hover:bg-transparent focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                                       >
-                                        <MoreVertical className="h-5 w-5 text-white" />
+                                        <MoreVertical className="h-4 w-4 text-white" />
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="w-48">
@@ -675,8 +675,8 @@ function MessagesContent() {
                                           setEditContent(message.content);
                                         }}
                                       >
-                                        <Edit2 className="mr-2 h-4 w-4" />
-                                        <span>Düzenle</span>
+                                        <Edit2 className="mr-2 h-3 w-3 md:h-4 md:w-4" />
+                                        <span className="text-sm">Düzenle</span>
                                       </DropdownMenuItem>
                                       <DropdownMenuItem 
                                         className="flex items-center py-2 px-3 text-destructive cursor-pointer"
@@ -685,29 +685,29 @@ function MessagesContent() {
                                           setShowDeleteDialog(true);
                                         }}
                                       >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        <span>Sil</span>
+                                        <Trash2 className="mr-2 h-3 w-3 md:h-4 md:w-4" />
+                                        <span className="text-sm">Sil</span>
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </div>
                               )}
                               <div className="flex flex-col gap-1">
-                                <p className={`text-xs font-medium ${
+                                <p className={`text-[10px] md:text-sm font-medium ${
                                   message.sender._id === session?.user?.id
                                     ? 'text-primary-foreground/90 dark:text-primary-foreground/80'
                                     : 'text-foreground/90 dark:text-foreground/80'
                                 }`}>
                                   {message.sender._id === session?.user?.id ? 'Sen' : message.sender.name}
                                 </p>
-                                <p className={`text-sm leading-relaxed ${
+                                <p className={`text-sm md:text-base leading-relaxed ${
                                   message.sender._id === session?.user?.id
                                     ? 'text-primary-foreground dark:text-primary-foreground/90'
                                     : 'text-foreground dark:text-foreground/90'
                                 }`}>
                                   {message.content}
                                 </p>
-                                <div className="flex items-center justify-between text-xs mt-1">
+                                <div className="flex items-center justify-between text-[10px] md:text-xs mt-1">
                                   <span className={
                                     message.sender._id === session?.user?.id
                                       ? 'text-primary-foreground/70 dark:text-primary-foreground/60'
@@ -728,40 +728,15 @@ function MessagesContent() {
                                         (düzenlendi)
                                       </span>
                                     )}
-                                    {message.sender._id === session?.user?.id && (
-                                      <div className="flex items-center">
-                                        {message.readStatus === 'ALL_READ' ? (
-                                          <div className="text-primary relative flex dark:text-primary/90">
-                                            <CheckCheck className="h-4 w-4" />
-                                            <CheckCheck className="h-4 w-4 absolute" style={{ left: '-4px' }} />
-                                          </div>
-                                        ) : message.readStatus === 'RECEIVER_READ' ? (
-                                          <div className="text-primary-foreground/70 dark:text-primary-foreground/60 relative flex">
-                                            <CheckCheck className="h-4 w-4" />
-                                            <CheckCheck className="h-4 w-4 absolute" style={{ left: '-4px' }} />
-                                          </div>
-                                        ) : message.readStatus === 'SENDER_READ' ? (
-                                          <div className="text-primary-foreground/50 dark:text-primary-foreground/40 relative flex">
-                                            <Check className="h-4 w-4" />
-                                            <Check className="h-4 w-4 absolute" style={{ left: '-4px' }} />
-                                          </div>
-                                        ) : (
-                                          <div className="text-primary-foreground/50 dark:text-primary-foreground/40 relative flex">
-                                            <Check className="h-4 w-4" />
-                                            <Check className="h-4 w-4 absolute" style={{ left: '-4px' }} />
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               </div>
                             </div>
                             {message.sender._id === session?.user?.id && (
-                              <Avatar className="w-10 h-10 ring-2 ring-white dark:ring-gray-800 shadow-inner">
+                              <Avatar className="hidden md:flex w-8 h-8 md:w-10 md:h-10 ring-2 ring-white dark:ring-gray-800 shadow-inner">
                                 <AvatarImage src={session.user.image || undefined} />
                                 <AvatarFallback 
-                                  className={`text-base bg-gradient-to-br ${getAvatarColor(session.user.id).bg} ${getAvatarColor(session.user.id).text} shadow-inner`}
+                                  className={`text-sm md:text-base bg-gradient-to-br ${getAvatarColor(session.user.id).bg} ${getAvatarColor(session.user.id).text} shadow-inner`}
                                 >
                                   {session.user.name?.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
@@ -774,7 +749,7 @@ function MessagesContent() {
                     <div ref={messagesEndRef} /> {/* Scroll için referans div */}
                   </div>
 
-                  <form onSubmit={handleSendMessage} className="flex gap-2 mt-4">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 mt-4 sticky bottom-0 bg-background dark:bg-[rgb(22,22,22)] border-t dark:border-[rgb(28,28,28)] p-2">
                     <Input
                       type="text"
                       placeholder="Mesajınızı yazın..."

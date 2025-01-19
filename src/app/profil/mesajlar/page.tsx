@@ -428,10 +428,16 @@ function MessagesContent() {
 
   // Konuşmaları ara
   const filteredConversations = useMemo(() => {
-    return conversations.filter(conversation => {
-      const searchTermLower = searchTerm.toLowerCase();
-      return conversation.name.toLowerCase().includes(searchTermLower);
-    });
+    return conversations
+      .sort((a, b) => {
+        const dateA = new Date(a.lastMessage?.createdAt || 0);
+        const dateB = new Date(b.lastMessage?.createdAt || 0);
+        return dateB.getTime() - dateA.getTime(); // En son mesaj en üstte
+      })
+      .filter(conversation => {
+        const searchTermLower = searchTerm.toLowerCase();
+        return conversation.name.toLowerCase().includes(searchTermLower);
+      });
   }, [conversations, searchTerm]);
 
   // Polling mekanizması ekle

@@ -23,7 +23,7 @@ export async function GET() {
     })
     .populate('sender', 'name image')
     .populate('receiver', 'name image')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: 1 });
 
     // Mesajları client formatına dönüştür
     const formattedMessages = messages.map(msg => ({

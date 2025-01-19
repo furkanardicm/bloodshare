@@ -24,7 +24,7 @@ interface BloodRequest {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { requestId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -52,7 +52,7 @@ export async function POST(
     }
 
     const bloodRequest = await db.collection<BloodRequest>('bloodRequests').findOne({
-      _id: new ObjectId(params.id)
+      _id: new ObjectId(params.requestId)
     });
     console.log('Bulunan kan isteği:', bloodRequest);
 
@@ -100,7 +100,7 @@ export async function POST(
     console.log('Yeni durum:', status);
 
     const updatedRequest = await db.collection<BloodRequest>('bloodRequests').findOneAndUpdate(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(params.requestId) },
       { 
         $push: { donors: newDonor },
         $set: { status }
@@ -155,13 +155,13 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { requestId: string } }
 ) {
   try {
     const { db } = await connectToDatabase();
 
     const bloodRequest = await db.collection('bloodRequests').findOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(params.requestId) },
       { projection: { donors: 1 } }
     );
 

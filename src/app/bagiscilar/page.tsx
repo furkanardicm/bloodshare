@@ -10,13 +10,15 @@ import { Loading } from "@/components/ui/loading"
 import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { bloodTypes } from '@/lib/constants'
+import { DonorCard } from '@/components/ui/donor-card'
 
 interface User {
   _id: string
   name: string
   bloodType: string
-  city?: string
-  lastDonationDate: string | null
+  city: string
+  lastDonationDate?: Date
   image: string
 }
 
@@ -45,40 +47,46 @@ export default function DonorsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [bloodType, setBloodType] = useState<string>("all")
-  const [city, setCity] = useState<string>("")
+  const [city, setCity] = useState<string>("all")
+  const [allCities, setAllCities] = useState<string[]>([])
   const { toast } = useToast()
 
-  // Benzersiz şehirleri al ve alfabetik sırala
-  const uniqueCities = Array.from(new Set(donors.filter(donor => donor.city).map(donor => donor.city)))
-    .sort((a, b) => a!.localeCompare(b!, 'tr'))
-
+  // İlk yüklemede tüm bağışçıları ve şehirleri getir
   useEffect(() => {
     async function fetchDonors() {
       try {
-        const response = await fetch('/api/users/donors')
-        if (!response.ok) throw new Error('Bağışçılar yüklenirken bir hata oluştu')
-        const data = await response.json()
-        setDonors(data)
+        setLoading(true);
+        const response = await fetch('/api/users/donors');
+        if (!response.ok) throw new Error('Bağışçılar yüklenirken bir hata oluştu');
+        const data = await response.json();
+        setDonors(data);
+        
+        // Benzersiz şehirleri al ve alfabetik sırala
+        const cities = Array.from(new Set(data
+          .filter((donor: User) => donor.city)
+          .map((donor: User) => donor.city))) as string[];
+        cities.sort((a, b) => a.localeCompare(b, 'tr'));
+        setAllCities(cities);
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Hata!",
           description: error instanceof Error ? error.message : 'Bir hata oluştu'
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchDonors()
-  }, [toast])
+    fetchDonors();
+  }, [toast]); // Sadece component mount olduğunda çalışsın
 
   const filteredDonors = donors.filter((donor) => {
-    const matchesSearch = donor.city ? donor.city.toLowerCase().includes(searchQuery.toLowerCase()) : false
-    const matchesBloodType = bloodType === "all" || donor.bloodType === bloodType
-    const matchesCity = !city || (donor.city && donor.city.toLowerCase() === city.toLowerCase())
-    return matchesSearch && matchesBloodType && matchesCity
-  })
+    const matchesSearch = donor.city ? donor.city.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const matchesBloodType = bloodType === "all" || donor.bloodType === bloodType;
+    const matchesCity = city === "all" || (donor.city && donor.city === city);
+    return matchesSearch && matchesBloodType && matchesCity;
+  });
 
   if (loading) {
     return <Loading />
@@ -102,97 +110,69 @@ export default function DonorsPage() {
           <div className="flex items-center gap-4">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <div className="relative flex-1 sm:flex-initial">
+                {/* Arama */}
+                <div className="relative w-full sm:w-[300px]">
                   <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Bağışçı ara..."
+                    placeholder="Şehir ara..."
+                    className="pl-8 focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus-visible:outline-none"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-8 w-full focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus-visible:outline-none"
                   />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-initial min-w-[150px]">
-                    <select
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="all">Tüm şehirler</option>
-                      {uniqueCities.map((cityName) => (
-                        <option key={cityName} value={cityName || "all"}>
-                          {cityName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="relative flex-1 sm:flex-initial min-w-[150px]">
-                    <select
-                      value={bloodType}
-                      onChange={(e) => setBloodType(e.target.value)}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="all">Tüm kan grupları</option>
-                      <option value="A+">A RH+</option>
-                      <option value="A-">A RH-</option>
-                      <option value="B+">B RH+</option>
-                      <option value="B-">B RH-</option>
-                      <option value="AB+">AB RH+</option>
-                      <option value="AB-">AB RH-</option>
-                      <option value="0+">0 RH+</option>
-                      <option value="0-">0 RH-</option>
-                    </select>
-                  </div>
-                </div>
+
+                {/* Kan Grubu Filtresi */}
+                <Select value={bloodType} onValueChange={setBloodType}>
+                  <SelectTrigger className="w-full sm:w-[180px] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <SelectValue placeholder="Kan grubu seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Kan Grupları</SelectItem>
+                    {bloodTypes.map((type: string) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Şehir Filtresi */}
+                <Select value={city} onValueChange={setCity}>
+                  <SelectTrigger className="w-full sm:w-[180px] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0">
+                    <SelectValue placeholder="Şehir seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Şehirler</SelectItem>
+                    {allCities.map((cityName) => (
+                      <SelectItem key={cityName} value={cityName}>
+                        {cityName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <Card className="bg-background">
-          <CardHeader>
-            <CardTitle>Bağışçı Listesi</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredDonors.length === 0 ? (
-              <p className="text-muted-foreground">
-                Aradığınız kriterlere uygun bağışçı bulunamadı.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredDonors.map((donor) => (
-                  <Link 
-                    key={donor._id} 
-                    href={`/profil/${donor._id}`}
-                    className="block hover:opacity-90 transition-opacity"
-                  >
-                    <Card className="border dark:border-gray-800">
-                      <CardHeader>
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-gray-800 shadow-inner">
-                            <AvatarImage src={donor.image} />
-                            <AvatarFallback 
-                              className={`text-lg bg-gradient-to-br ${getAvatarColor(donor._id).bg} ${getAvatarColor(donor._id).text} shadow-inner`}
-                            >
-                              {donor.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-lg">{donor.name}</CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              {donor.bloodType} Kan Grubu
-                            </p>
-                          </div>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Donor Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {filteredDonors.length === 0 ? (
+            <div className="col-span-full">
+              <Card className="p-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-center text-muted-foreground">
+                    Bağışçı bulunamadı
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+            </div>
+          ) : (
+            filteredDonors.map((donor) => (
+              <DonorCard key={donor._id} donor={donor} />
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

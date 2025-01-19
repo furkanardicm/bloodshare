@@ -80,4 +80,17 @@ export const CITIES = [
   "Kilis",
   "Osmaniye",
   "Düzce"
-]; 
+];
+
+export const bloodTypes = [
+  'A+',
+  'A-',
+  'B+',
+  'B-',
+  'AB+',
+  'AB-',
+  '0+',
+  '0-'
+] as const;
+
+export type BloodType = typeof bloodTypes[number]; 

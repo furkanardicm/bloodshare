@@ -28,8 +28,16 @@ export default function ProfileLayout({
   ]
 
   // Mevcut sayfaya göre breadcrumb'ı güncelle
-  if (pathname.includes('/isteklerim')) {
+  if (pathname.match(/\/isteklerim\/[^/]+\/bagiscilar/)) {
+    const requestId = pathname.split('/')[3]; // URL'den istek ID'sini al
+    breadcrumbItems.push(
+      { title: 'İsteklerim', href: '/profil/isteklerim' },
+      { title: 'Bağışçılar', href: pathname }
+    )
+  } else if (pathname.includes('/isteklerim')) {
     breadcrumbItems.push({ title: 'İsteklerim', href: '/profil/isteklerim' })
+  } else if (pathname.includes('/bagislarim')) {
+    breadcrumbItems.push({ title: 'Bağışlarım', href: '/profil/bagislarim' })
   } else if (pathname.includes('/gecmis')) {
     breadcrumbItems.push({ title: 'Geçmiş', href: '/profil/gecmis' })
   } else if (pathname.includes('/ayarlar')) {
@@ -40,6 +48,10 @@ export default function ProfileLayout({
 
   const isActive = (path: string) => {
     if (!pathname) return false;
+    // İsteklerim/[requestId]/bagiscilar için özel kontrol
+    if (path === '/profil/isteklerim' && pathname.includes('/isteklerim/')) {
+      return true;
+    }
     return pathname === path;
   };
 

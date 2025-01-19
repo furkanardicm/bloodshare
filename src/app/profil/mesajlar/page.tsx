@@ -460,7 +460,14 @@ function MessagesContent() {
             (message.sender._id === selectedUserId && message.receiver._id === session.user.id) ||
             (message.sender._id === session.user.id && message.receiver._id === selectedUserId)
           );
-          setMessages(conversationMessages);
+          
+          // Yeni mesaj varsa güncelle ve scroll yap
+          if (conversationMessages.length > messages.length) {
+            setMessages(conversationMessages);
+            scrollToBottom();
+          } else {
+            setMessages(conversationMessages);
+          }
         }
 
         // Konuşma listesini güncelle

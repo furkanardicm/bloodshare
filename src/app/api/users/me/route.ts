@@ -25,7 +25,6 @@ export async function GET() {
     }
 
     const { db } = await connectToDatabase();
-    console.log('MongoDB bağlantısı başarılı');
     
     // Kullanıcıyı bul
     const user = await db.collection("users").findOne(
@@ -36,71 +35,8 @@ export async function GET() {
       return new NextResponse("User not found", { status: 404 });
     }
 
-    console.log('Kullanıcı bulundu:', user);
-
-    // Kullanıcının bağışlarını bul
-    const bloodRequests = await db.collection("bloodRequests").find({
-      'donors.userId': user._id
-    }).toArray() as BloodRequest[];
-
-    console.log('Kullanıcının bağışları:', bloodRequests);
-
-    // Bağış sayılarını hesapla
-    let totalDonations = 0;
-    let pendingDonations = 0;
-    let completedDonations = 0;
-    let lastDonationDate: string | null = null;
-
-    bloodRequests.forEach(request => {
-      const userDonation = request.donors.find(d => {
-        const donorId = typeof d.userId === 'string' ? d.userId : d.userId.toString();
-        const userId = typeof user._id === 'string' ? user._id : user._id.toString();
-        return donorId === userId;
-      });
-
-      if (userDonation) {
-        if (userDonation.status === 'completed') {
-          completedDonations++;
-          // Son bağış tarihini güncelle
-          if (!lastDonationDate || new Date(request.createdAt) > new Date(lastDonationDate)) {
-            lastDonationDate = request.createdAt;
-          }
-        } else if (userDonation.status === 'pending') {
-          pendingDonations++;
-        }
-      }
-    });
-
-    totalDonations = completedDonations;
-
-    console.log('Hesaplanan bağış sayıları:', { totalDonations, pendingDonations, completedDonations, lastDonationDate });
-
-    // Kullanıcı bilgilerini güncelle
-    await db.collection("users").updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          totalDonations,
-          pendingDonations,
-          completedDonations,
-          lastDonationDate
-        }
-      }
-    );
-
-    // Güncel kullanıcı bilgilerini döndür
-    const updatedUser = {
-      ...user,
-      totalDonations,
-      pendingDonations,
-      completedDonations,
-      lastDonationDate,
-      _id: undefined
-    };
-
-    console.log('Güncellenmiş kullanıcı:', updatedUser);
-
-    return NextResponse.json(updatedUser);
+    // Kullanıcı bilgilerini olduğu gibi döndür
+    return NextResponse.json(user);
   } catch (error) {
     console.error("Error fetching user data:", error);
     return new NextResponse("Internal Server Error", { status: 500 });

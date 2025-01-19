@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { requestId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,11 +20,11 @@ export async function GET(
 
     const { db } = await connectToDatabase();
 
-    console.log('Fetching request:', params.id);
+    console.log('Fetching request:', params.requestId);
 
     // İsteği bul
-    const bloodRequest = await db.collection('blood-requests').findOne({
-      _id: new ObjectId(params.id)
+    const bloodRequest = await db.collection('bloodRequests').findOne({
+      _id: new ObjectId(params.requestId)
     });
 
     console.log('Found request:', bloodRequest);

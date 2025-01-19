@@ -14,7 +14,6 @@ export async function GET() {
 
     await dbConnect();
 
-    // Kullanıcının tüm mesajlarını getir ve populate et
     const messages = await Message.find({
       $or: [
         { sender: session.user.id },
@@ -24,7 +23,7 @@ export async function GET() {
     })
     .populate('sender', 'name image')
     .populate('receiver', 'name image')
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: -1 });
 
     // Mesajları client formatına dönüştür
     const formattedMessages = messages.map(msg => ({
